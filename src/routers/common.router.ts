@@ -10,7 +10,5 @@ CommonRouter.use(bodyParser.json());
 CommonRouter.use('/info', InfoRouter);
 CommonRouter.use('/utils', UtilsRouter);
 
-CommonRouter.use('/mobile/info', InfoRouter);
-CommonRouter.use('/mobile/utils', UtilsRouter);
 
 // CommonRouter.use('/payments', PaymentsRouter);

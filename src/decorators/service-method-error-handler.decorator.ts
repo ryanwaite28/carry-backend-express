@@ -16,7 +16,7 @@ export function CatchRequestHandlerError(options?: {
     const childFunction = descriptor.value;
     
     descriptor.value = async function (...args: any[]) {
-      console.log(`CatchRequestHandlerError dec:`, { target, key, descriptor, childFunction, args });
+      // console.log(`CatchRequestHandlerError dec:`, { target, key, descriptor, childFunction, args });
       try {
         return await childFunction.apply(this, args);
       } 
@@ -83,7 +83,7 @@ export function CatchServiceError(options?: {
     const childFunction = descriptor.value;
     
     descriptor.value = function (...args: any[]) {
-      console.log(`CatchServiceError dec:`, { target, key, descriptor, childFunction, args });
+      // console.log(`CatchServiceError dec:`, { target, key, descriptor, childFunction, args });
       try {
         // @ts-ignore
         return childFunction.apply(this, args);
