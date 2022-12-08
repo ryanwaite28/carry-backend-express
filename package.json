@@ -20,6 +20,10 @@
     "Node",
     "App"
   ],
+  "engines": {
+    "node": "16.17.0",
+    "npm": "8.15.0"
+  },
   "author": "Ryan M. Waite",
   "license": "ISC",
   "dependencies": {
