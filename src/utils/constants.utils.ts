@@ -571,4 +571,28 @@ export const corsOptions: CorsOptions = {
   }
 };
 
+export const corsMobileOptions: CorsOptions = {
+  // https://expressjs.com/en/resources/middleware/cors.html
+  credentials: true,
+  optionsSuccessStatus: 200,
+  origin(origin: string | undefined, callback: any) {
+    console.log(`mobile request:`, { origin });
+    const useOrigin = (origin || '');
+    const originIsAllowed = !useOrigin || WHITELIST_DOMAINS.includes(useOrigin);
+    // console.log({
+    //   origin,
+    //   callback,
+    //   originIsAllowed,
+    //   whitelist_domains,
+    // });
+
+    if (originIsAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Mobile Origin "${origin}" Not allowed by CORS`));
+    }
+  }
+};
+
 export const corsMiddleware = cors(corsOptions);
+export const corsMobileMiddleware = cors(corsMobileOptions);

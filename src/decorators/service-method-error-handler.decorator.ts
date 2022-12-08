@@ -12,13 +12,13 @@ export function CatchRequestHandlerError(options?: {
     key: string | symbol,
     descriptor: PropertyDescriptor
   ) {
-    console.log(`CatchRequestHandlerError init:`, { target, key, descriptor });
+    // console.log(`CatchRequestHandlerError init:`, { target, key, descriptor });
     const childFunction = descriptor.value;
     
     descriptor.value = async function (...args: any[]) {
       console.log(`CatchRequestHandlerError dec:`, { target, key, descriptor, childFunction, args });
       try {
-        return childFunction.apply(this, args);
+        return await childFunction.apply(this, args);
       } 
       catch (error) {
         console.error(options?.errorMessage || `CatchRequestHandlerError:`, error);
@@ -40,6 +40,8 @@ export function CatchRequestHandlerError(options?: {
             }
           }
         };
+
+        console.log(`returning handler error catch:`, serviceMethodResults);
         return serviceMethodResults; 
       }
     };
@@ -187,3 +189,4 @@ export function ApplyToAllMethods(useDecorator?: Function) {
   }
 
 }
+

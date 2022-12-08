@@ -6,7 +6,7 @@ import { DelivermeApiRequestHandler } from '../handlers/deliverme-api.handler';
 
 
 
-export const DelivermeApiRouter: Router = Router();
+export const DelivermeApiRouter: Router = Router({ mergeParams: true });
 
 /** GET */
 

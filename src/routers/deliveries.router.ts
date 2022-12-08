@@ -26,11 +26,10 @@ import {
 import { YouAuthorizedSlim, YouAuthorizedSlimWeak } from '../guards/you.guard';
 
 
-export const DeliveriesRouter: Router = Router();
+export const DeliveriesRouter: Router = Router({ mergeParams: true });
 
 /** GET */
 
-DeliveriesRouter.get('/:delivery_id', DeliveryExists, DeliveriesRequestHandler.get_delivery_by_id);
 
 //dispute
 DeliveriesRouter.get('/:delivery_id/dispute', DeliveryDisputeExists, DeliveriesRequestHandler.get_delivery_dispute_by_delivery_id);
@@ -41,6 +40,7 @@ DeliveriesRouter.get('/:delivery_id/dispute-messages', YouAuthorizedSlim, Delive
 DeliveriesRouter.get('/find-available-from/city/:city/state/:state', YouAuthorizedSlim, DeliveriesRequestHandler.find_available_delivery_by_from_city_and_state);
 DeliveriesRouter.get('/find-available-to/city/:city/state/:state', YouAuthorizedSlim, DeliveriesRequestHandler.find_available_delivery_by_to_city_and_state);
 
+DeliveriesRouter.get('/:delivery_id', DeliveryExists, DeliveriesRequestHandler.get_delivery_by_id);
 
 
 /** POST */

@@ -129,6 +129,7 @@ export async function get_user_by_phone(
 
 
 export async function get_user_by_id(id: number) {
+  console.log(`get_user_by_id:`, { id });
   const user_model = await Users.findOne({
     where: { id },
     include: [{

@@ -9,6 +9,7 @@ import { ApplyToAllMethods, CatchRequestHandlerError, MethodLogger } from '../de
 
 export class UsersRequestHandler {
   
+  @CatchRequestHandlerError()
   static async check_session(request: Request, response: Response): ExpressResponse {
     const serviceMethodResults: ServiceMethodResults = await UsersService.check_session(request);
     console.log({ serviceMethodResults });
@@ -16,8 +17,9 @@ export class UsersRequestHandler {
   }
 
 
+  @CatchRequestHandlerError()
   static async get_user_by_id(request: Request, response: Response): ExpressResponse {
-    console.log(`get_user_by_id`);
+    console.log(`get_user_by_id`, { url: request.url });
     const user_id = parseInt(request.params.id, 10);
     const serviceMethodResults: ServiceMethodResults = await UsersService.get_user_by_id(user_id);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
@@ -331,6 +333,3 @@ export class UsersRequestHandler {
   }
 }
 
-
-
-// export const UsersRequestHandler = new UsersRequestHandlerDef();

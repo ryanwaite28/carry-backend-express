@@ -8,11 +8,10 @@ import { NotificationsRequestHandler } from '../handlers/notifications.handler';
 import { MessagesRequestHandler } from '../handlers/messages.handler';
 
 
-export const UsersRouter: Router = Router();
+export const UsersRouter: Router = Router({ mergeParams: true });
 
 /** Profile Context */
 
-UsersRouter.get('/:id', UsersRequestHandler.get_user_by_id);
 UsersRouter.get('/phone/:phone', UsersRequestHandler.get_user_by_phone);
 
 UsersRouter.get('/random', UsersRequestHandler.get_random_users);
@@ -49,6 +48,7 @@ UsersRouter.get('/:you_id/messages/:user_id/:min_id', YouAuthorized, UserIdsAreD
 
 UsersRouter.get('/:user_id/get-subscription-info', UserExists, UsersRequestHandler.get_subscription_info);
 
+UsersRouter.get('/:id', UsersRequestHandler.get_user_by_id);
 
 
 // POST

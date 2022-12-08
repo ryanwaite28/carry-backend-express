@@ -19,9 +19,10 @@ import { isProd, WHITELIST_DOMAINS } from './utils/constants.utils';
 import { uniqueValue } from './utils/helpers.utils';
 import { StripeService } from './services/stripe.service';
 import { StripeWebhookEventsRequestHandler } from './services/stripe-webhook-events.service';
-import { CarryRouter } from './routers/carry.router';
+import { CarryRouter } from './routers/_carry.router';
 import { carry_db_init } from './models/_def.model';
 import { installExpressApp } from './utils/template-engine.utils';
+import { RequestLoggerMiddleware } from './middlewares/request-logger.middleware';
 
 
 
@@ -40,7 +41,10 @@ app.use(body_parser.json());
 app.use(body_parser.urlencoded({ extended: false }));
 app.set('trust proxy', true);
 
+app.use(RequestLoggerMiddleware);
+
 const appServer: http.Server = http.createServer(app);
+
 
 // const peerServer = ExpressPeerServer(appServer, {
 //   // debug: true,
