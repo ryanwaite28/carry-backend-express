@@ -19,45 +19,27 @@ export const CarryMobileRouter: Router = Router({ mergeParams: true });
 CarryWebRouter.use(bodyParser.json());
 CarryMobileRouter.use(bodyParser.json());
 
-const disable_cors = (
-  process.env.APP_ENV === `LOCAL`
-  || true
+const enable_cors = (
+  process.env.APP_ENV !== `LOCAL`
 );
 
-console.log({ disable_cors });
+console.log({ enable_cors });
 
-if (disable_cors) {
+if (enable_cors) {
 
-  // don't use cors options when running locally
-  
-  /** Mount Routers */
-
-  CarryWebRouter.use('/users', UsersRouter);
-  CarryWebRouter.use('/deliveries', DeliveriesRouter);
-  CarryWebRouter.use('/common', CommonRouter);
-  
-  
-  CarryMobileRouter.use(corsMobileMiddleware);
-  CarryMobileRouter.use('/users', UsersRouter);
-  CarryMobileRouter.use('/deliveries', DeliveriesRouter);
-  CarryMobileRouter.use('/common', CommonRouter);
+  CarryWebRouter.use(corsMiddleware);
 
 }
-else {
-  
-  /** Mount Routers */
 
-  CarryWebRouter.use('/users', corsMiddleware, UsersRouter);
-  CarryWebRouter.use('/deliveries', corsMiddleware, DeliveriesRouter);
-  CarryWebRouter.use('/common', corsMiddleware, CommonRouter);
+CarryWebRouter.use('/users', UsersRouter);
+CarryWebRouter.use('/deliveries', DeliveriesRouter);
+CarryWebRouter.use('/common', CommonRouter);
 
 
-  CarryMobileRouter.use(corsMobileMiddleware);
-  CarryMobileRouter.use('/users', UsersRouter);
-  CarryMobileRouter.use('/deliveries', DeliveriesRouter);
-  CarryMobileRouter.use('/common', CommonRouter);
-
-}
+CarryMobileRouter.use(corsMobileMiddleware);
+CarryMobileRouter.use('/users', UsersRouter);
+CarryMobileRouter.use('/deliveries', DeliveriesRouter);
+CarryMobileRouter.use('/common', CommonRouter);
 
 CarryRouter.use(`/web`, CarryWebRouter);
 CarryRouter.use(`/mobile`, CarryMobileRouter);
