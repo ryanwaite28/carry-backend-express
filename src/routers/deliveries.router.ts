@@ -23,7 +23,7 @@ import {
   IsSettlementOfferCreator,
   IsNotSettlementOfferCreator
 } from "../guards/delivery-dispute.guard";
-import { YouAuthorizedSlim, YouAuthorizedSlimWeak } from 'src/guards/you.guard';
+import { YouAuthorizedSlim, YouAuthorizedSlimWeak } from '../guards/you.guard';
 
 
 export const DeliveriesRouter: Router = Router();

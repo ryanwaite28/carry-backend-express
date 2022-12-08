@@ -1,4 +1,4 @@
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
+import { HttpStatusCode } from '../enums/http-codes.enum';
 import Stripe from 'stripe';
 
 

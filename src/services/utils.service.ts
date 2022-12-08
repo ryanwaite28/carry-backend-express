@@ -5,8 +5,8 @@ import {
 } from 'express';
 import { generateJWT } from '../utils/helpers.utils';
 import axios from 'axios';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { ServiceMethodResults, ServiceMethodAsyncResults, IPositionStackLocationData } from 'src/interfaces/common.interface';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { ServiceMethodResults, ServiceMethodAsyncResults, IPositionStackLocationData } from '../interfaces/common.interface';
 
 
 

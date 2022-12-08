@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { AuthorizeJWT } from 'src/utils/helpers.utils';
+import { AuthorizeJWT } from '../utils/helpers.utils';
 
 
 

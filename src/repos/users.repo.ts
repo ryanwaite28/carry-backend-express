@@ -3,11 +3,11 @@ import {
   Op,
   WhereOptions
 } from 'sequelize';
-import { IUser, IUserExpoDevice, IMyModel, IApiKey } from 'src/interfaces/carry.interface';
-import { PlainObject } from 'src/interfaces/common.interface';
-import { Users, UserExpoDevices, ApiKeys } from 'src/models/delivery.model';
-import { user_attrs_slim } from 'src/utils/constants.utils';
-import { convertModelCurry, convertModelsCurry, convertModel } from 'src/utils/helpers.utils';
+import { IUser, IUserExpoDevice, IMyModel, IApiKey } from '../interfaces/carry.interface';
+import { PlainObject } from '../interfaces/common.interface';
+import { Users, UserExpoDevices, ApiKeys } from '../models/delivery.model';
+import { user_attrs_slim } from '../utils/constants.utils';
+import { convertModelCurry, convertModelsCurry, convertModel } from '../utils/helpers.utils';
 
 
 

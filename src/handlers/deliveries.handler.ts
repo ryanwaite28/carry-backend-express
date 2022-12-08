@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { ExpressResponse, ServiceMethodResults } from 'src/interfaces/common.interface';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { ExpressResponse, ServiceMethodResults } from '../interfaces/common.interface';
 import { IUser } from '../interfaces/carry.interface';
 import { IDelivery, IDeliveryDispute, IDeliveryDisputeSettlementOffer } from '../interfaces/deliverme.interface';
 import { DeliveriesService } from '../services/deliveries.service';

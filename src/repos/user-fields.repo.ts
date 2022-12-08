@@ -1,7 +1,7 @@
 import {
   WhereOptions
 } from 'sequelize';
-import { UserFields } from 'src/models/delivery.model';
+import { UserFields } from '../models/delivery.model';
 
 
 

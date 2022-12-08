@@ -1,8 +1,8 @@
-import { cities_map } from "src/assets/cities";
-import { countries_by_name_map } from "src/assets/countries";
-import { states_map } from "src/assets/states";
-import { zipcodes_map } from "src/assets/zipcodes";
-import { IModelValidator } from "src/interfaces/common.interface";
+import { cities_map } from '../assets/cities';
+import { countries_by_name_map } from '../assets/countries';
+import { states_map } from '../assets/states';
+import { zipcodes_map } from '../assets/zipcodes';
+import { IModelValidator } from '../interfaces/common.interface';
 import { CARRY_EVENT_TYPES } from "../enums/carry.enum";
 import { IMyModel, INotification, IUser } from "../interfaces/carry.interface";
 import { IDelivery, IDeliveryDispute } from "../interfaces/deliverme.interface";

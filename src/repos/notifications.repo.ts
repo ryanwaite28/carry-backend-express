@@ -9,9 +9,9 @@ import {
   GroupOption,
   Order
 } from 'sequelize';
-import { PlainObject } from 'src/interfaces/common.interface';
-import { send_sms } from 'src/utils/sms-client.utils';
-import { validatePhone } from 'src/utils/validators.utils';
+import { PlainObject } from '../interfaces/common.interface';
+import { send_sms } from '../utils/sms-client.utils';
+import { validatePhone } from '../utils/validators.utils';
 import { Notifications } from '../models/delivery.model';
 import { CommonSocketEventsHandler } from '../services/common.socket-event-handler';
 import { populate_carry_notification_obj } from '../utils/carry.chamber';

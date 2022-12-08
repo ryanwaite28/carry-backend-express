@@ -50,8 +50,8 @@ import {
   NextFunction,
 } from 'express';
 import { UploadedFile } from 'express-fileupload';
-import { HttpStatusCode } from "src/enums/http-codes.enum";
-import { ServiceMethodResults, IModelValidator, PlainObject, ServiceMethodAsyncResults } from "src/interfaces/common.interface";
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { ServiceMethodResults, IModelValidator, PlainObject, ServiceMethodAsyncResults } from '../interfaces/common.interface';
 import { IStoreImage, store_base64_image, store_image } from "./cloudinary-manager.utils";
 import { allowedImages } from "./constants.utils";
 import { validateName, validateEmail, validatePassword, numberValidator, genericTextValidator } from "./validators.utils";

@@ -1,5 +1,5 @@
 import socket_io from 'socket.io';
-import { PlainObject } from 'src/interfaces/common.interface';
+import { PlainObject } from '../interfaces/common.interface';
 import { COMMON_EVENT_TYPES } from '../enums/carry.enum';
 import { IUser } from '../interfaces/carry.interface';
 import { decodeJWT } from '../utils/helpers.utils';

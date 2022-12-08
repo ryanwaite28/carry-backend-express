@@ -3,7 +3,7 @@ import {
   Op,
   WhereOptions
 } from 'sequelize';
-import { UsersPhoneVerifications } from 'src/models/delivery.model';
+import { UsersPhoneVerifications } from '../models/delivery.model';
 
 
 

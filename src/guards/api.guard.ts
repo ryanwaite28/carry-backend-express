@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
+import { HttpStatusCode } from '../enums/http-codes.enum';
 import { IDelivery } from '../interfaces/deliverme.interface';
 
 

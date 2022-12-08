@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "strict": true,
     "baseUrl": "./",
+    "rootDir": "./src",
     "outDir": "./dist",
     "removeComments": true,
     "resolveJsonModule": true,
@@ -10,17 +10,25 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "incremental": true,
+    "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": false,
-    "target": "es6",
     "moduleResolution": "node",
     "importHelpers": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "target": "es2022",
+    "module": "commonjs",
+    "paths": {
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "include": [
+    "./src/**/*.ts"
+  ],
+  "exclude": [
+    "./node_modules",
+    "dist"
+  ]
 }

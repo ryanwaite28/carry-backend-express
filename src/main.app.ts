@@ -1,6 +1,5 @@
 
 import * as dotenv from 'dotenv';
-console.log({ process_env: process.env });
 dotenv.config();
 
 

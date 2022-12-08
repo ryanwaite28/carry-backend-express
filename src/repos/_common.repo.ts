@@ -10,7 +10,7 @@ import {
   GroupOption,
   Order
 } from 'sequelize';
-import { PlainObject } from 'src/interfaces/common.interface';
+import { PlainObject } from '../interfaces/common.interface';
 import { IMyModel, IUserNotificationsLastOpened, MyModelStatic, MyModelStaticGeneric } from '../interfaces/carry.interface';
 import { IModelRating } from '../interfaces/deliverme.interface';
 import { UserNotificationsLastOpened } from '../models/delivery.model';

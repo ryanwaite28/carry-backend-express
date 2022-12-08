@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
-import { DeliveryDisputeStatus } from 'src/enums/carry.enum';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { IUser } from 'src/interfaces/carry.interface';
-import { IDeliveryDispute, IDeliveryDisputeSettlementOffer } from 'src/interfaces/deliverme.interface';
-import { get_delivery_dispute_by_delivery_id, get_delivery_dispute_info_by_delivery_id, get_open_delivery_dispute_settlement_offer_by_dispute_id } from 'src/repos/deliveries.repo';
+import { DeliveryDisputeStatus } from '../enums/carry.enum';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { IUser } from '../interfaces/carry.interface';
+import { IDeliveryDispute, IDeliveryDisputeSettlementOffer } from '../interfaces/deliverme.interface';
+import { get_delivery_dispute_by_delivery_id, get_delivery_dispute_info_by_delivery_id, get_open_delivery_dispute_settlement_offer_by_dispute_id } from '../repos/deliveries.repo';
 
 
 

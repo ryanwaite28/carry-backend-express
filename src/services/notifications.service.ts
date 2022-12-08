@@ -2,11 +2,11 @@ import { Request, Response } from 'express';
 import { WhereOptions, fn } from 'sequelize';
 import * as CommonRepo from '../repos/_common.repo';
 import { HttpStatusCode } from '../enums/http-codes.enum';
-import { Notifications, Users } from 'src/models/delivery.model';
+import { Notifications, Users } from '../models/delivery.model';
 import { TokensService } from './tokens.service';
 import { get_user_notification_last_opened, update_user_notification_last_opened } from '../repos/_common.repo';
-import { populate_carry_notification_obj } from 'src/utils/carry.chamber';
-import { ServiceMethodAsyncResults, ServiceMethodResults } from 'src/interfaces/common.interface';
+import { populate_carry_notification_obj } from '../utils/carry.chamber';
+import { ServiceMethodAsyncResults, ServiceMethodResults } from '../interfaces/common.interface';
 
 
 

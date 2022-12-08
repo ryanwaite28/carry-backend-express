@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import { UploadedFile } from 'express-fileupload';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { IUser } from 'src/interfaces/carry.interface';
-import { ExpressResponse, ServiceMethodResults } from 'src/interfaces/common.interface';
-import { IDelivery } from 'src/interfaces/deliverme.interface';
-import { get_user_by_id } from 'src/repos/users.repo';
-import { DeliveriesService } from 'src/services/deliveries.service';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { IUser } from '../interfaces/carry.interface';
+import { ExpressResponse, ServiceMethodResults } from '../interfaces/common.interface';
+import { IDelivery } from '../interfaces/deliverme.interface';
+import { get_user_by_id } from '../repos/users.repo';
+import { DeliveriesService } from '../services/deliveries.service';
 
 
 

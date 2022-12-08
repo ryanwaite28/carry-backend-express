@@ -9,9 +9,9 @@ import {
   GroupOption,
   Order
 } from 'sequelize';
-import { STATUSES } from 'src/enums/common.enum';
-import { PlainObject } from 'src/interfaces/common.interface';
-import { delete_cloudinary_image } from 'src/utils/cloudinary-manager.utils';
+import { STATUSES } from '../enums/common.enum';
+import { PlainObject } from '../interfaces/common.interface';
+import { delete_cloudinary_image } from '../utils/cloudinary-manager.utils';
 import { DeliveryDisputeSettlementOfferStatus } from '../enums/carry.enum';
 import { IMyModel } from '../interfaces/carry.interface';
 import { ICreateDeliveryProps, ICreateDeliveryTrackingUpdateProps, ICarryUserRating, IDelivery, IDeliveryDispute, IDeliveryDisputeCustomerSupportMessage, IDeliveryDisputeLog, IDeliveryDisputeSettlementInvoice, IDeliveryDisputeSettlementOffer, IDeliveryMessage, IDeliveryTrackingUpdate } from '../interfaces/deliverme.interface';

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { IDelivery } from 'src/interfaces/deliverme.interface';
-import { get_delivery_by_id } from 'src/repos/deliveries.repo';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { IDelivery } from '../interfaces/deliverme.interface';
+import { get_delivery_by_id } from '../repos/deliveries.repo';
 
 
 

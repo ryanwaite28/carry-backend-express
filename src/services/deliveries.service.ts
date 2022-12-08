@@ -92,11 +92,11 @@ import { UsersService } from './users.service';
 import Stripe from 'stripe';
 import { get_user_ratings_stats_via_model } from '../repos/_common.repo';
 import moment from 'moment';
-import { PlainObject, ServiceMethodResults } from 'src/interfaces/common.interface';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { validatePhone } from 'src/utils/validators.utils';
-import { send_sms } from 'src/utils/sms-client.utils';
-import { STATUSES, STRIPE_ACTION_EVENTS, TRANSACTION_STATUS } from 'src/enums/common.enum';
+import { PlainObject, ServiceMethodResults } from '../interfaces/common.interface';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { validatePhone } from '../utils/validators.utils';
+import { send_sms } from '../utils/sms-client.utils';
+import { STATUSES, STRIPE_ACTION_EVENTS, TRANSACTION_STATUS } from '../enums/common.enum';
 
 
 
@@ -680,7 +680,7 @@ export class DeliveriesService {
         // https://stripe.com/docs/payments/save-during-payment
 
         payment_intent = await StripeService.stripe.paymentIntents.create({
-          description: `Carry - New delivery listing: ${createObj.title}`,
+          description: `${process.env.APP_NAME} - New delivery listing: ${createObj.title}`,
           amount: chargeFeeData.final_total,
           currency: 'usd',
           customer: you.stripe_customer_account_id,
@@ -690,7 +690,7 @@ export class DeliveriesService {
         });
 
         // charge = await StripeService.stripe.charges.create({
-        //   description: `CARRY - new delivery listing: ${createObj.title}`,
+        //   description: `${process.env.APP_NAME} - new delivery listing: ${createObj.title}`,
         //   amount: chargeFeeData.final_total,
         //   currency: 'usd',
         //   source: data.payment_method_id,
@@ -1399,7 +1399,7 @@ export class DeliveriesService {
           )
             .then((placeData) => {
               const msg =
-                `Carry - Delivery: new tracking update for delivery "${delivery.title}"\n\n` +
+                `${process.env.APP_NAME} - Delivery: new tracking update for delivery "${delivery.title}"\n\n` +
                 `${createObj.message}\n\n` +
                 `Carrier's Location: ${placeData.city}, ${placeData.state} ` +
                 `${placeData.county ? '(' + placeData.county + ')' : ''} ${
@@ -1415,7 +1415,7 @@ export class DeliveriesService {
             .catch((error) => {
               console.log(`Can't send sms with location; sending without...`);
               const msg =
-                `Carry - Delivery: new tracking update for delivery "${delivery.title}"\n\n` +
+                `${process.env.APP_NAME} - Delivery: new tracking update for delivery "${delivery.title}"\n\n` +
                 `${createObj.message}`;
               console.log(`sending:`, msg);
 
@@ -2760,7 +2760,7 @@ export class DeliveriesService {
     try {
       // https://stripe.com/docs/payments/save-during-payment
       const paymentIntentCreateData: Stripe.PaymentIntentCreateParams = {
-        description: `CARRY - payment for delivery listing: ${delivery.title}`,
+        description: `${process.env.APP_NAME} - payment for delivery listing: ${delivery.title}`,
         amount: chargeFeeData.final_total,
         currency: 'usd',
 
@@ -3071,7 +3071,7 @@ export class DeliveriesService {
     let transfer: Stripe.Transfer;
     try {
       const transferCreateData: Stripe.TransferCreateParams = {
-        description: `CARRY - payment for delivery listing: ${delivery.title}`,
+        description: `${process.env.APP_NAME} - payment for delivery listing: ${delivery.title}`,
         amount: useTransferAmount,
         currency: 'usd',
         destination: delivery.carrier!.stripe_account_id,
@@ -4198,7 +4198,7 @@ export class DeliveriesService {
     );
     const new_payment_intent: Stripe.PaymentIntent =
       await StripeService.stripe.paymentIntents.create({
-        description: `CARRY - dispute settlement for delivery: ${delivery.title}`,
+        description: `${process.env.APP_NAME} - dispute settlement for delivery: ${delivery.title}`,
         amount: chargeFeeData.final_total,
         currency: 'usd',
         customer: you.stripe_customer_account_id,
@@ -4232,7 +4232,7 @@ export class DeliveriesService {
     const transferAmount = settlement_offer.offer_amount * 100;
     const charge_id = payment_intent['charges'].data[0].id;
     const transfer = await StripeService.stripe.transfers.create({
-      description: `CARRY - dispute settlement for delivery: ${delivery.title}`,
+      description: `${process.env.APP_NAME} - dispute settlement for delivery: ${delivery.title}`,
       amount: transferAmount,
       currency: 'usd',
       destination: user.stripe_account_id,

@@ -1,7 +1,7 @@
 // https://github.com/expo/expo-server-sdk-node
 
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
-import { PlainObject } from 'src/interfaces/common.interface';
+import { PlainObject } from '../interfaces/common.interface';
 import { IUserExpoDevice } from '../interfaces/carry.interface';
 import { get_user_expo_devices } from '../repos/users.repo';
 

@@ -9,12 +9,12 @@
     "tsc-w": "tsc -w",
     "cw": "tsc -w",
     "tcw": "tsc -w",
-    "start-dev": "npm run tsc && NODE_ENV=local nodemon dist/app.js",
-    "start-server": "NODE_ENV=local nodemon dist/app.js",
-    "sd": "npm run tsc && NODE_ENV=local nodemon dist/app.js",
-    "ss": "NODE_ENV=local nodemon dist/app.js",
-    "build": "npm run tsc",
-    "start": "node dist/app.js"
+    "start": "npm run tsc && nodemon dist/main.app.js",
+    "start-dev": "npm run tsc && NODE_ENV=local nodemon dist/main.app.js",
+    "start-server": "NODE_ENV=local nodemon dist/main.app.js",
+    "sd": "npm run tsc && NODE_ENV=local nodemon dist/main.app.js",
+    "ss": "NODE_ENV=local nodemon dist/main.app.js",
+    "build": "npm run tsc"
   },
   "keywords": [
     "Node",
@@ -75,7 +75,7 @@
     "nexmo": "^2.7.0",
     "ngrok": "^4.3.3",
     "node-mailjet": "^3.3.1",
-    "nodemon": "^1.19.3",
+    "nodemon": "^2.0.20",
     "nunjucks": "^3.2.0",
     "peer": "^0.6.1",
     "pg": "^8.7.1",
@@ -96,6 +96,7 @@
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
+    "ts-node": "^10.9.1",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9"
   }

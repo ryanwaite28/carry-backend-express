@@ -243,6 +243,43 @@ export const UserRefunds = <MyModelStatic> sequelize.define('carry_user_refunds'
 }, common_options);
 
 
+export const Messagings = <MyModelStatic> sequelize.define('carry_messagings', {
+  id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:            { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  sender_id:          { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  date_created:       { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+export const MessagingRequests = <MyModelStatic> sequelize.define('carry_messaging_requests', {
+  id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:            { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  sender_id:          { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  date_created:       { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+export const Messages = <MyModelStatic> sequelize.define('carry_messages', {
+  id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  from_id:            { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  to_id:              { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  body:               { type: Sequelize.TEXT, allowNull: true, defaultValue: '' },
+  app_context:        { type: Sequelize.STRING, allowNull: true, defaultValue: '' }, // _common/hotspot.myfavors/etc
+  opened:             { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+  date_created:       { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+export const MessagePhotos = <MyModelStatic> sequelize.define('carry_message_photos', {
+  id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  message_id:          { type: Sequelize.INTEGER, allowNull: false, references: { model: Messages, key: 'id' } },
+  photo_link:                       { type: Sequelize.STRING, allowNull: true, defaultValue: '' },
+  photo_id:                         { type: Sequelize.STRING, allowNull: true, defaultValue: '' },
+  date_created:        { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:                { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+
 
 export const CarryAdmins = <MyModelStatic> sequelize.define('carry_admins', {
   id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -641,7 +678,10 @@ Notifications.belongsTo(Users, { as: 'to', foreignKey: 'to_id', targetKey: 'id' 
 Users.hasMany(Notifications, { as: 'from_notifications', foreignKey: 'from_id', sourceKey: 'id' });
 Notifications.belongsTo(Users, { as: 'from', foreignKey: 'from_id', targetKey: 'id' });
 
-
+Users.hasMany(Messages, { as: 'messages_sent', foreignKey: 'from_id', sourceKey: 'id' });
+Messages.belongsTo(Users, { as: 'from', foreignKey: 'from_id', targetKey: 'id' });
+Users.hasMany(Messages, { as: 'messages_received', foreignKey: 'to_id', sourceKey: 'id' });
+Messages.belongsTo(Users, { as: 'to', foreignKey: 'to_id', targetKey: 'id' });
 
 Users.hasMany(Delivery, { as: 'carry_deliveries', foreignKey: 'owner_id', sourceKey: 'id' });
 Delivery.belongsTo(Users, { as: 'owner', foreignKey: 'owner_id', targetKey: 'id' });

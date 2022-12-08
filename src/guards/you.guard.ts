@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { IUser } from 'src/interfaces/carry.interface';
-import { Users } from 'src/models/delivery.model';
-import { get_user_by_id } from 'src/repos/users.repo';
-import { user_attrs_slim } from 'src/utils/constants.utils';
-import { AuthorizeJWT } from 'src/utils/helpers.utils';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { IUser } from '../interfaces/carry.interface';
+import { Users } from '../models/delivery.model';
+import { get_user_by_id } from '../repos/users.repo';
+import { user_attrs_slim } from '../utils/constants.utils';
+import { AuthorizeJWT } from '../utils/helpers.utils';
 
 
 

@@ -18,15 +18,15 @@ import { get_user_unseen_notifications_count } from '../repos/notifications.repo
 import { ExpoPushNotificationsService } from './expo-notifications.service';
 import { StripeService } from './stripe.service';
 import Stripe from 'stripe';
-import { isProd } from 'src/utils/constants.utils';
-import { validateEmail, validatePassword } from 'src/utils/validators.utils';
-import { API_KEY_SUBSCRIPTION_PLAN } from 'src/enums/common.enum';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
-import { ServiceMethodAsyncResults, ServiceMethodResults, PlainObject } from 'src/interfaces/common.interface';
-import { delete_cloudinary_image } from 'src/utils/cloudinary-manager.utils';
-import { send_email } from 'src/utils/email-client.utils';
-import { send_verify_sms_request, cancel_verify_sms_request, check_verify_sms_request } from 'src/utils/sms-client.utils';
-import { SignedUp_EMAIL, PasswordReset_EMAIL, PasswordResetSuccess_EMAIL, VerifyEmail_EMAIL } from 'src/utils/template-engine.utils';
+import { isProd } from '../utils/constants.utils';
+import { validateEmail, validatePassword } from '../utils/validators.utils';
+import { API_KEY_SUBSCRIPTION_PLAN } from '../enums/common.enum';
+import { HttpStatusCode } from '../enums/http-codes.enum';
+import { ServiceMethodAsyncResults, ServiceMethodResults, PlainObject } from '../interfaces/common.interface';
+import { delete_cloudinary_image } from '../utils/cloudinary-manager.utils';
+import { send_email } from '../utils/email-client.utils';
+import { send_verify_sms_request, cancel_verify_sms_request, check_verify_sms_request } from '../utils/sms-client.utils';
+import { SignedUp_EMAIL, PasswordReset_EMAIL, PasswordResetSuccess_EMAIL, VerifyEmail_EMAIL } from '../utils/template-engine.utils';
 
 
 

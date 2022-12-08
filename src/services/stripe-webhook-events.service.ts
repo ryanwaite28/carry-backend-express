@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { HttpStatusCode } from 'src/enums/http-codes.enum';
+import { HttpStatusCode } from '../enums/http-codes.enum';
 
 
 
