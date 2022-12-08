@@ -11,3 +11,4 @@ database.sqlite
 deploy-cloudfront.json
 Dockerfile
 docker-compose.yml
+package-lock.json

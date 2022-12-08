@@ -74,10 +74,6 @@ SocketsService.handle_io_connections(io);
 
 /** Mount Sub-Router(s) to Master Application Instance */
 
-export const AppRouter: express.Router = express.Router({ mergeParams: true });
-export const CarryWebRouter: express.Router = express.Router({ mergeParams: true });
-export const CarryMobileRouter: express.Router = express.Router({ mergeParams: true });
-
 app.post('/stripe-webhook', body_parser.raw({ type: 'application/json' }), async (request: Request, response: Response) => {
   console.log(`-------stripe webhook request:-------`, request.body, request.headers);
   
