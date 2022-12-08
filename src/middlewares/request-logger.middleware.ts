@@ -8,7 +8,7 @@ export function RequestLoggerMiddleware(request: Request, response: Response, ne
     body: request.body,
     headers: request.headers,
     cookies: request.cookies,
-    device: request['device'],
+    device: JSON.stringify(request['device']),
   });
 
   return next();
