@@ -4,19 +4,19 @@
   "description": "Community App",
   "main": "./src/app.ts",
   "scripts": {
+    "build": "webpack",
+    "start": "node ./build/main.app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
     "tsc-w": "tsc -w",
     "cw": "tsc -w",
     "tcw": "tsc -w",
-    "start": "npm run start-watch",
     "start-dev": "npm run tsc && NODE_ENV=local nodemon dist/main.app.js",
     "start-server": "NODE_ENV=local nodemon dist/main.app.js",
     "sd": "npm run tsc && NODE_ENV=local nodemon dist/main.app.js",
     "ss": "NODE_ENV=local nodemon dist/main.app.js",
-    "build": "npm run tsc",
     "webpack": "webpack",
-    "start-watch": "webpack --watch"
+    "start-watch": "webpack --watch --env addLocalEnv=true"
   },
   "keywords": [
     "Node",

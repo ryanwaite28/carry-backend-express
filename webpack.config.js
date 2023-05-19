@@ -25,14 +25,16 @@ module.exports = (env) => {
     new NodemonPlugin(),
   ];
   
-  console.log(`including static resources...`);
-  usePlugins.push(
-    new CopyPlugin({
-      patterns: [
-        { from: './.env', to: '' },
-      ],
-    })
-  );
+  if (env.addLocalEnv) {
+    console.log(`including static resources...`);
+    usePlugins.push(
+      new CopyPlugin({
+        patterns: [
+          { from: './.env', to: '' },
+        ],
+      })
+    );
+  }
 
   return {
     target: 'node',
