@@ -9,7 +9,7 @@
     "tsc-w": "tsc -w",
     "cw": "tsc -w",
     "tcw": "tsc -w",
-    "start": "npm run tsc && nodemon dist/main.app.js",
+    "start": "npm run start-watch",
     "start-dev": "npm run tsc && NODE_ENV=local nodemon dist/main.app.js",
     "start-server": "NODE_ENV=local nodemon dist/main.app.js",
     "sd": "npm run tsc && NODE_ENV=local nodemon dist/main.app.js",
