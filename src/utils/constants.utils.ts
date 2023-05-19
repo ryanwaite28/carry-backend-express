@@ -526,6 +526,15 @@ export const create_delivery_dispute_settlement_required_props: {
   },
 ];
 
+export const create_card_payment_method_required_props: IModelValidator[] = [
+  { field: `number`, name: `Card Number`, errorMessage: `Must be a 16-digit number`, validator: (arg: any) => (/[\d]{16}/).test(arg) },
+  { field: `exp_month`, name: `Expiration Month`, errorMessage: `Must be a number from 1 to 12`, validator: (arg: any) => (/[\d]{1,2}/).test(arg) },
+  { field: `exp_year`, name: `Expiration Year`, errorMessage: `Must be a 4-digit number`, validator: (arg: any) => (/[\d]{4}/).test(arg) },
+  { field: `cvc`, name: `CVC`, errorMessage: `Must be a 3-digit number`, validator: (arg: any) => (/[\d]{3}/).test(arg) },
+];
+
+
+
 export const delivery_search_attrs = [
   "id",
   "owner_id",
@@ -576,7 +585,7 @@ export const corsMobileOptions: CorsOptions = {
   credentials: true,
   optionsSuccessStatus: 200,
   origin(origin: string | undefined, callback: any) {
-    console.log(`mobile request:`, { origin });
+    // console.log(`mobile request:`, { origin });
     const useOrigin = (origin || '');
     const originIsAllowed = !useOrigin || WHITELIST_DOMAINS.includes(useOrigin);
     // console.log({

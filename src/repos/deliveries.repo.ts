@@ -77,7 +77,7 @@ export const deliveryMasterIncludes: Includeable[] = [
   }, 
   {
     model: DeliveryTrackingUpdates,
-    as: 'carry_delivery_tracking_updates',
+    as: 'deliverme_delivery_tracking_updates',
     include: [
       {
         model: Users,
@@ -281,7 +281,7 @@ export function get_delivery_by_id(id: number) {
   return Delivery.findOne({
     where: { id },
     include: deliveryMasterIncludes,
-    order: deliveryTrackingOrderBy,
+    // order: deliveryTrackingOrderBy,
   })
   .then(convertDeliveryModel);
 }
@@ -290,7 +290,7 @@ export function get_delivery_slim_by_id(id: number) {
   return Delivery.findOne({
     where: { id },
     include: deliveryGeneralIncludes,
-    order: deliveryTrackingOrderBy,
+    // order: deliveryTrackingOrderBy,
   })
   .then(convertDeliveryModel);
 }
@@ -565,7 +565,7 @@ export function browse_map_deliveries(params: {
   const findQuery = {
     where: useWhere,
     include: deliveryMasterIncludes,
-    order: deliveryTrackingOrderBy,
+    // order: deliveryTrackingOrderBy,
   };
 
   return Delivery.findAll(findQuery).then(convertDeliveryModels);

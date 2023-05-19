@@ -78,6 +78,13 @@ export class UsersRequestHandler {
     const serviceMethodResults: ServiceMethodResults = await UsersService.add_card_payment_method_to_user_customer(you.stripe_customer_account_id, payment_method_id);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
+
+
+  static async create_card_payment_method(request: Request, response: Response): ExpressResponse {
+    const you: IUser = response.locals.you;
+    const serviceMethodResults: ServiceMethodResults = await UsersService.create_card_payment_method(you, request.body);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
   
   
   static async remove_card_payment_method_to_user_customer(request: Request, response: Response): ExpressResponse {

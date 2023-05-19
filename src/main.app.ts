@@ -34,11 +34,7 @@ const app: express.Application = express();
 
 installExpressApp(app);
 
-app.use(express_fileupload({ safeFileNames: true, preserveExtension: true }));
-app.use(express_device.capture());
-app.use(cookie_parser.default());
-app.use(body_parser.json());
-app.use(body_parser.urlencoded({ extended: false }));
+
 app.set('trust proxy', true);
 
 app.use(RequestLoggerMiddleware);
@@ -77,32 +73,29 @@ SocketsService.handle_io_connections(io);
 
 
 /** Mount Sub-Router(s) to Master Application Instance */
+const endpointSecret = process.env.STRIPE_WEBHOOK_SIG ;
+app.post('/stripe-webhook', express.raw({ type: 'application/json' }), async (request: Request, response: Response) => {  
+  const sig = request.headers['stripe-signature'];
+  console.log(`-------stripe webhook request:-------`, { body: request.body, headers: request.headers, sig, STRIPE_WEBHOOK_SIG: process.env.STRIPE_WEBHOOK_SIG });
 
-app.post('/stripe-webhook', body_parser.raw({ type: 'application/json' }), async (request: Request, response: Response) => {
-  console.log(`-------stripe webhook request:-------`, request.body, request.headers);
-  
-  const stripe_signature = request.get('stripe-signature') ?? '';
-  
   let event;
-  
-  // Verify webhook signature and extract the event.
-  // See https://stripe.com/docs/webhooks/signatures for more information.
+
   try {
-    event = StripeService.stripe.webhooks.constructEvent(request.body, stripe_signature, process.env.STRIPE_WEBHOOK_SIG!);
+    event = StripeService.stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
   } catch (err) {
-    const errMsg = `Webhook Error: ${(<any> err).message}`;
-    console.log(errMsg);
-    return response.status(400).send(errMsg);
+    const msg = `Webhook Error: ${err['message']}`;
+    console.log(msg);
+    response.status(400).send(msg);
+    return;
   }
   
-  console.log(`stripe webhook event:`, { event });
+  console.log(`stripe webhook event:`, { event }, JSON.stringify(event));
   
   return StripeWebhookEventsRequestHandler.handleEvent(event, request, response);
 });
 
 
 app.use('/', CarryRouter);
-
 
 
 

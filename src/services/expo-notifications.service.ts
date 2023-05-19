@@ -26,6 +26,8 @@ export class ExpoPushNotificationsService {
       const user_expo_devices: IUserExpoDevice[] = await get_user_expo_devices(user_id);
       const expo_tokens: string[] = user_expo_devices.map(device => device.token);
 
+      console.log({ user_id, expo_tokens });
+
       for (const expo_token of expo_tokens) {
         // Each push token looks like ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]
 

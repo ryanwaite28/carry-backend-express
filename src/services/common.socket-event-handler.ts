@@ -123,10 +123,11 @@ export class CommonSocketEventsHandler {
     }
 
     const usersSocketsRoom = `FOR_USER:${params.user_id}`;
-    CommonSocketEventsHandler.io?.in(usersSocketsRoom).allSockets().then((usersSockets) => {
-      console.log(`emitEventToUserSockets - Emitting to room ${usersSocketsRoom}...`, usersSockets);
-      CommonSocketEventsHandler.io.in(usersSocketsRoom).emit(params.event, params.event_data);
-    });
+    // CommonSocketEventsHandler.io?.in(usersSocketsRoom).allSockets().then((usersSockets) => {
+    //   console.log(`emitEventToUserSockets - Emitting to room ${usersSocketsRoom}...`, usersSockets);
+    //   CommonSocketEventsHandler.io.in(usersSocketsRoom).emit(params.event, params.event_data);
+    // });
+    CommonSocketEventsHandler.io.to(usersSocketsRoom).emit(params.event, params.event_data);
   }
 
   static emitEventToRoom(params: {

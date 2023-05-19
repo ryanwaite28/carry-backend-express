@@ -18,7 +18,7 @@ import { get_user_unseen_notifications_count } from '../repos/notifications.repo
 import { ExpoPushNotificationsService } from './expo-notifications.service';
 import { StripeService } from './stripe.service';
 import Stripe from 'stripe';
-import { isProd } from '../utils/constants.utils';
+import { create_card_payment_method_required_props, isProd } from '../utils/constants.utils';
 import { validateEmail, validatePassword } from '../utils/validators.utils';
 import { API_KEY_SUBSCRIPTION_PLAN } from '../enums/common.enum';
 import { HttpStatusCode } from '../enums/http-codes.enum';
@@ -27,6 +27,8 @@ import { delete_cloudinary_image } from '../utils/cloudinary-manager.utils';
 import { send_email } from '../utils/email-client.utils';
 import { send_verify_sms_request, cancel_verify_sms_request, check_verify_sms_request } from '../utils/sms-client.utils';
 import { SignedUp_EMAIL, PasswordReset_EMAIL, PasswordResetSuccess_EMAIL, VerifyEmail_EMAIL } from '../utils/template-engine.utils';
+import { CommonSocketEventsHandler } from './common.socket-event-handler';
+import { CARRY_EVENT_TYPES } from 'src/enums/carry.enum';
 
 
 
@@ -305,6 +307,40 @@ export class UsersService {
     };
     return serviceMethodResults;
   }
+
+  static async create_card_payment_method(you: IUser, data: PlainObject) {
+    const results = validateData({
+      data,
+      validators: create_card_payment_method_required_props
+    });
+    if (results.error) {
+      return results;
+    }
+
+    const card_payment_method = await StripeService.stripe.paymentMethods.create({
+      type: `card`,
+      card: {
+        number: results.info.data.number,
+        exp_month: results.info.data.exp_month,
+        exp_year: results.info.data.exp_year,
+        cvc: results.info.data.cvc,
+      },
+      customer: you.stripe_customer_account_id,
+      metadata: {
+        user_id: you.id
+      }
+    });
+    
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        message: `Card Payment method added successfully!`,
+        data: card_payment_method
+      }
+    };
+    return serviceMethodResults;
+  }
   
   static async add_card_payment_method_to_user_customer(stripe_customer_account_id: string, payment_method_id: string): ServiceMethodAsyncResults {
     let payment_method: Stripe.Response<Stripe.PaymentMethod>;
@@ -578,7 +614,7 @@ export class UsersService {
       middlename: middlename && capitalize(middlename) || '',
       lastname: capitalize(lastname),
       // gender: parseInt(gender, 10),
-      username: (username || uniqueValue()).toLowerCase(),
+      username: (username || Date.now().toString()).toLowerCase(),
       displayname: `${capitalize(firstname)} ${capitalize(lastname)}`,
       email: email.toLowerCase(),
       password: bcrypt.hashSync(password),
@@ -784,7 +820,7 @@ export class UsersService {
       }
 
       if (phone.toLowerCase() === 'x') {
-        const updates = await UserRepo.update_user({ phone: null }, { id: you.id });
+        const updates = await UserRepo.update_user({ phone: null, temp_phone: null }, { id: you.id });
         const newYouModel = await UserRepo.get_user_by_id(you.id);
         const newYou = newYouModel!;
         delete newYou.password;
@@ -829,6 +865,9 @@ export class UsersService {
           info: {
             data: {
               message: `Phone number is already in use by another user account.`,
+              data: {
+                phoneAlreadyInUse: true
+              }
             }
           }
         };
@@ -847,12 +886,12 @@ export class UsersService {
       console.log('sms_results', sms_results);
       if (sms_results.error_text) {
         try {
-          console.log('canceling...', sms_results);
+          console.log('canceling sms request...', sms_results);
           await cancel_verify_sms_request(sms_results.request_id);
 
           sms_results = await send_verify_sms_request(phone);
 
-          const updates = await UserRepo.update_user({ phone }, { id: you.id });
+          const updates = await UserRepo.update_user({ temp_phone: phone }, { id: you.id });
           const serviceMethodResults: ServiceMethodResults = {
             status: HttpStatusCode.OK,
             error: false,
@@ -886,7 +925,9 @@ export class UsersService {
         // (<IRequest> request).session.sms_verification = sms_results;
         // (<IRequest> request).session.sms_phone = phone;
 
-        const updates = await UserRepo.update_user({ temp_phone: phone }, { id: you.id });
+        const updatesObj = { temp_phone: phone };
+        console.log(updatesObj);
+        const updates = await UserRepo.update_user(updatesObj, { id: you.id });
         const serviceMethodResults: ServiceMethodResults = {
           status: HttpStatusCode.OK,
           error: false,
@@ -928,7 +969,10 @@ export class UsersService {
           status: HttpStatusCode.BAD_REQUEST,
           error: true,
           info: {
-            message: `Verification request id is required`
+            message: `Verification request id is required`,
+            data: {
+              missingRequestId: true
+            }
           }
         };
         return serviceMethodResults;
@@ -938,17 +982,37 @@ export class UsersService {
           status: HttpStatusCode.BAD_REQUEST,
           error: true,
           info: {
-            message: `Phone number is required`
+            message: `Phone number is required`,
+            data: {
+              missingPhone: true
+            }
           }
         };
         return serviceMethodResults;
       }
-      if (you.temp_phone !== phone) {
+      const check_temp_phone = await UserRepo.get_user_by_temp_phone(phone);
+      if (!check_temp_phone) {
         const serviceMethodResults: ServiceMethodResults = {
           status: HttpStatusCode.BAD_REQUEST,
           error: true,
           info: {
-            message: `Phone number given does not match original number requested`
+            message: `No user found by that temporary phone`,
+            data: {
+              noTempPhoneFound: true
+            }
+          }
+        };
+        return serviceMethodResults;
+      }
+      if (check_temp_phone.id !== you.id) {
+        const serviceMethodResults: ServiceMethodResults = {
+          status: HttpStatusCode.BAD_REQUEST,
+          error: true,
+          info: {
+            message: `Temp phone does not belong to requesting user`,
+            data: {
+              invalidUserTempPhone: true
+            }
           }
         };
         return serviceMethodResults;
@@ -958,7 +1022,10 @@ export class UsersService {
           status: HttpStatusCode.BAD_REQUEST,
           error: true,
           info: {
-            message: `Verification code is required`
+            message: `Verification code is required`,
+            data: {
+              missingVerifyCode: true
+            }
           }
         };
         return serviceMethodResults;
@@ -972,13 +1039,16 @@ export class UsersService {
           status: HttpStatusCode.BAD_REQUEST,
           error: true,
           info: {
-            message: `Invalid sms verification code`
+            message: `Invalid sms verification code`,
+            data: {
+              invalidVerifyCode: true
+            }
           }
         };
         return serviceMethodResults;
       }
 
-      const updates = await UserRepo.update_user({ phone: you.temp_phone, temp_phone: ``, phone_verified: true }, { id: you.id });
+      const updates = await UserRepo.update_user({ phone: you.temp_phone, temp_phone: null, phone_verified: true }, { id: you.id });
       const newYouModel = await UserRepo.get_user_by_id(you.id);
       const newYou = newYouModel!;
       delete newYou.password;
@@ -2021,9 +2091,11 @@ export class UsersService {
 
     let accountLinks: PlainObject = {};
 
-    const useUrl = isProd 
-      ? `http://modernapps.ml/verify-stripe-account/${you.uuid}`
-      : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
+    // const useUrl = isProd 
+    //   ? `http://modernapps.ml/verify-stripe-account/${you.uuid}`
+    //   : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
+
+    const useUrl = `carry://settings/`;
 
     if (!results.error) {
       await UserRepo.update_user({ stripe_account_verified: true }, { id: you.id });
@@ -2033,6 +2105,19 @@ export class UsersService {
       const jwt = TokensService.newUserJwtToken(you);
       (<any> results).token = jwt;
       (<any> results).you = you;
+
+      const message: string = `Your stripe account has been verified! If you don't see changes, log out and log back in.`;
+      ExpoPushNotificationsService.sendUserPushNotification({
+        user_id: you.id,
+        message
+      });
+      CommonSocketEventsHandler.emitEventToUserSockets({
+        user_id: you.id,
+        event: CARRY_EVENT_TYPES.STRIPE_ACCOUNT_VERIFIED,
+        event_data: {
+          message,
+        },
+      });
     }
     else if (createLinks) {
       const useHost = host?.endsWith('/') ? host.substr(0, host.length - 1) : host;
@@ -2123,10 +2208,12 @@ export class UsersService {
 
     let accountLinks: PlainObject = {};
 
-    const useUrl = isProd 
-      ? `http://modernapps.ml/verify-stripe-account/${you.uuid}`
-      : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
+    // const useUrl = isProd 
+    //   ? `http://modernapps.ml/verify-stripe-account/${you.uuid}`
+    //   : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
 
+    const useUrl = `carry://settings/`;
+    
     if (!results.error) {
       await UserRepo.update_user({ stripe_account_verified: true }, { id: you.id });
       const you_updated = await UserRepo.get_user_by_id(you.id);
@@ -2138,7 +2225,7 @@ export class UsersService {
 
       ExpoPushNotificationsService.sendUserPushNotification({
         user_id: you.id,
-        message: `Your stripe account has been verified! If you don't see changes, log out and log back in.`,
+        message: `Your stripe account has been verified! To see changes, sign out and log back in.`,
       });
     }
     else if (createLinks) {

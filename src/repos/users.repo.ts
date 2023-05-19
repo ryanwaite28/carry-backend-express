@@ -126,6 +126,26 @@ export async function get_user_by_phone(
   }
 }
 
+export async function get_user_by_temp_phone(
+  temp_phone: string
+) {
+  try {
+    const userModel = await Users.findOne({
+      where: { temp_phone },
+      attributes: user_attrs_slim,
+      include: [{
+        model: UserExpoDevices,
+        as: `expo_devices`,
+      }],
+    })
+    .then(convertUserModel);
+    return userModel;
+  } catch (e) {
+    console.log(`get_user_by_temp_phone error - `, e);
+    return null;
+  }
+}
+
 
 
 export async function get_user_by_id(id: number) {
@@ -156,6 +176,23 @@ export async function get_user_by_stripe_customer_account_id(stripe_customer_acc
   .then(convertUserModel)
   .catch((err) => {
     console.log(`could not get user by stripe_customer_account_id`, { stripe_customer_account_id }, err);
+    throw err;
+  })
+  return user_model;
+}
+
+export async function get_user_by_stripe_connected_account_id(stripe_account_id: string) {
+  const user_model = await Users.findOne({
+    where: { stripe_account_id },
+    include: [{
+      model: UserExpoDevices,
+      as: `expo_devices`,
+    }],
+    attributes: user_attrs_slim
+  })
+  .then(convertUserModel)
+  .catch((err) => {
+    console.log(`could not get user by stripe_account_id`, { stripe_account_id }, err);
     throw err;
   })
   return user_model;

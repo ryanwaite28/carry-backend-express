@@ -688,9 +688,9 @@ Delivery.belongsTo(Users, { as: 'owner', foreignKey: 'owner_id', targetKey: 'id'
 Users.hasMany(Delivery, { as: 'carry_deliverings', foreignKey: 'carrier_id', sourceKey: 'id' });
 Delivery.belongsTo(Users, { as: 'carrier', foreignKey: 'carrier_id', targetKey: 'id' });
 
-Delivery.hasMany(DeliveryTrackingUpdates, { as: 'carry_delivery_tracking_updates', foreignKey: 'delivery_id', sourceKey: 'id' });
+Delivery.hasMany(DeliveryTrackingUpdates, { as: 'deliverme_delivery_tracking_updates', foreignKey: 'delivery_id', sourceKey: 'id' });
 DeliveryTrackingUpdates.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
-Users.hasMany(DeliveryTrackingUpdates, { as: 'carry_user_tracking_updates', foreignKey: 'user_id', sourceKey: 'id' });
+Users.hasMany(DeliveryTrackingUpdates, { as: 'deliverme_user_tracking_updates', foreignKey: 'user_id', sourceKey: 'id' });
 DeliveryTrackingUpdates.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
 
 

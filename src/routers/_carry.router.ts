@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import cors from 'cors';
+import express_device from 'express-device';
+import express_fileupload from 'express-fileupload';
+import * as body_parser from 'body-parser';
+import * as cookie_parser from 'cookie-parser';
 import * as bodyParser from 'body-parser';
 import { corsMiddleware, corsMobileMiddleware } from '../utils/constants.utils';
 import { DeliveriesRouter } from './deliveries.router';
@@ -8,6 +11,12 @@ import { CommonRouter } from './common.router';
 
 
 export const CarryRouter: Router = Router({ mergeParams: true });
+
+CarryRouter.use(express_fileupload({ safeFileNames: true, preserveExtension: true }));
+CarryRouter.use(express_device.capture());
+CarryRouter.use(cookie_parser.default());
+CarryRouter.use(body_parser.json());
+CarryRouter.use(body_parser.urlencoded({ extended: false }));
 
 
 

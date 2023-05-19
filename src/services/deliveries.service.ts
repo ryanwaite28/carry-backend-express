@@ -482,7 +482,7 @@ export class DeliveriesService {
       status: HttpStatusCode.OK,
       error: false,
       info: {
-        message: message_response,
+        message: `Message sent successfully!`,
         data: new_message,
       },
     };
@@ -3041,15 +3041,17 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    const balance = await StripeService.stripe.balance.retrieve();
-    console.log({ balance }, JSON.stringify(balance));
-
+    
     const payment_intent = await StripeService.stripe.paymentIntents.retrieve(
       delivery.payment_intent_id,
       { expand: ['charges'] },
     );
+    console.log({ payment_intent }, JSON.stringify({ payment_intent }));
+    const charge = await StripeService.stripe.charges.retrieve(payment_intent.latest_charge as string);
     // const was_subscribed: boolean = payment_intent.metadata['was_subscribed'] === 'true' ? true : false;
     // const chargeFeeData = StripeService.add_on_stripe_processing_fee(delivery.payout, was_subscribed);
+    console.log({ charge }, JSON.stringify({ charge }));
+    const charge_id = payment_intent['charges']?.data[0]?.id || charge.id;
 
     const transferAmount = delivery.payout * 100;
     const carrierHasMembershipResults =
@@ -3058,7 +3060,6 @@ export class DeliveriesService {
     const useTransferAmount = carrierHasMembershipResults.info.data
       ? transferAmount
       : transferAmount - deduction;
-    const charge_id = payment_intent['charges'].data[0].id;
     console.log({
       payment_intent_id: payment_intent.id,
       charge_id,

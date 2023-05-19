@@ -58,6 +58,7 @@ UsersRouter.post('/:you_id/feedback', YouAuthorized, UsersRequestHandler.send_fe
 UsersRouter.post('/:you_id/notifications/update-last-opened', YouAuthorized, NotificationsRequestHandler.update_user_last_opened);
 UsersRouter.post('/:you_id/notifications/app/:micro_app/update-app-notifications-last-opened', YouAuthorized, NotificationsRequestHandler.update_user_app_notification_last_opened);
 UsersRouter.post('/:you_id/send-message/:user_id', YouAuthorized, UserIdsAreDifferent, MessagesRequestHandler.send_user_message);
+// UsersRouter.post('/:you_id/create-card-payment-method', YouAuthorized, UsersRequestHandler.create_card_payment_method);
 UsersRouter.post('/:you_id/customer-cards-payment-methods/:payment_method_id', YouAuthorized, UsersRequestHandler.add_card_payment_method_to_user_customer);
 UsersRouter.post('/:you_id/create-subscription/:payment_method_id', YouAuthorized, UsersRequestHandler.create_subscription);
 UsersRouter.post('/:you_id/cancel-subscription', YouAuthorized, UsersRequestHandler.cancel_subscription);

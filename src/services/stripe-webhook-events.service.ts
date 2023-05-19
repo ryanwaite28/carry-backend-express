@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
+import { get_user_by_stripe_connected_account_id, get_user_by_stripe_customer_account_id } from '../repos/users.repo';
+import Stripe from 'stripe';
 import { HttpStatusCode } from '../enums/http-codes.enum';
+import { UsersService } from './users.service';
 
 
 
@@ -20,8 +23,15 @@ export class StripeWebhookEventsRequestHandler {
   static async handleEvent(event: any, request: Request, response: Response) {
     switch (event.type) {
       case 'account.updated': {
-        var account = event.data.object;
+        const account: Stripe.Account = event.data.object;
         // Then define and call a function to handle the event account.updated
+        console.log(`Searching for user by stripe connected account id:`, account.id);
+        const check_user = await get_user_by_stripe_connected_account_id(account.id);
+        console.log({ check_user });
+        if (check_user) {
+          console.log(`Verifying stripe account for ${account.id}`);
+          UsersService.verify_stripe_account(check_user, '', false);
+        }
         break;
       }
       case 'account.application.authorized':
@@ -32,10 +42,11 @@ export class StripeWebhookEventsRequestHandler {
         var account = event.data.object;
         // Then define and call a function to handle the event account.application.deauthorized
         break;
-      case 'account.external_account.created':
-        var accountExternalAccount = event.data.object;
+      case 'account.external_account.created': {
+        const accountExternalAccount = event.data.object;
         // Then define and call a function to handle the event account.external_account.created
         break;
+      }
       case 'account.external_account.deleted':
         var accountExternalAccount = event.data.object;
         // Then define and call a function to handle the event account.external_account.deleted
