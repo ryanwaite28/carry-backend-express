@@ -8,6 +8,7 @@ import { corsMiddleware, corsMobileMiddleware } from '../utils/constants.utils';
 import { DeliveriesRouter } from './deliveries.router';
 import { UsersRouter } from './users.router';
 import { CommonRouter } from './common.router';
+import { CsrfProtectionMiddleware } from 'src/middlewares/csrf.middleware';
 
 
 export const CarryRouter: Router = Router({ mergeParams: true });
@@ -34,12 +35,13 @@ const enable_cors = (
 
 console.log({ enable_cors });
 
-if (enable_cors) {
+// if (enable_cors) {
 
   CarryWebRouter.use(corsMiddleware);
 
-}
+// }
 
+CarryWebRouter.use(CsrfProtectionMiddleware);
 CarryWebRouter.use('/users', UsersRouter);
 CarryWebRouter.use('/deliveries', DeliveriesRouter);
 CarryWebRouter.use('/common', CommonRouter);
