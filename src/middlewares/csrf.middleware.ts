@@ -2,6 +2,7 @@ import { Request, Response, NextFunction, CookieOptions } from "express";
 import moment from "moment";
 import { HttpStatusCode } from "../enums/http-codes.enum";
 import { v1 as uuidv1 } from "uuid";
+import { isLocal, isProd } from "src/utils/constants.utils";
 
 
 
@@ -9,11 +10,18 @@ const CSRF_COOKIE_NAME = `CSRF-TOKEN`;
 const CSRF_HEADER_NAME = `X-CSRF-TOKEN`;
 const CSRF_SAFE_METHODS = ['GET', 'OPTIONS', 'HEAD'];
 
+const useCookieDomain = isProd 
+  ? `d1j6zxrk2bh0fr.cloudfront.net`
+  : isLocal
+    ? `localhost`
+    : `d2k2dtjp8tf6lv.cloudfront.net`;
+
+console.log({ useCookieDomain });
 
 const cookieOptions: CookieOptions = {
   httpOnly: false,
   path: `/`,
-  // domain: process.env.NODE_ENV && process.env.NODE_ENV === 'production' ? 'https://rmw-modern-client.herokuapp.com' : undefined,
+  domain: useCookieDomain,
   sameSite: 'none',
   secure: true,
   // expires: moment().add(1, 'hour').toDate()
