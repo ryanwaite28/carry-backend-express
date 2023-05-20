@@ -2007,7 +2007,7 @@ export class UsersService {
     
     // fallback options
     const useUrl = isProd 
-      ? `http://modernapps.ml/verify-stripe-account/${you.uuid}`
+      ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
       : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
 
     const useHost = host?.endsWith('/') ? host.substr(0, host.length - 1) : host;
@@ -2091,11 +2091,11 @@ export class UsersService {
 
     let accountLinks: PlainObject = {};
 
-    // const useUrl = isProd 
-    //   ? `http://modernapps.ml/verify-stripe-account/${you.uuid}`
-    //   : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
+    const useUrl = isProd 
+      ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
+      : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
 
-    const useUrl = `carry://settings/`;
+    // const useUrl = `carry://settings/`;
 
     if (!results.error) {
       await UserRepo.update_user({ stripe_account_verified: true }, { id: you.id });
