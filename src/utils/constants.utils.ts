@@ -8,6 +8,12 @@ export const URL_REGEX = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-
 export const BASE64_REGEX = /^data:([A-Za-z-+\/]+);base64,(.+)$/;
 export const WHITELIST_DOMAINS = process.env[`CORS_WHITELIST_ORIGINS`] ? process.env[`CORS_WHITELIST_ORIGINS`].split(',') : [];
 
+console.log({
+  isAppEnvSet,
+  isDevEnv,
+  isProd
+});
+
 
 
 
