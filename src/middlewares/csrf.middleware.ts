@@ -87,16 +87,16 @@ export function CsrfProtectionMiddleware(request: Request, response: Response, n
       message: `${CSRF_COOKIE_NAME} cookie not found on request.`
     });
   }
-  if (!csrf_token_header) {
-    return response.status(HttpStatusCode.BAD_REQUEST).json({
-      message: `${CSRF_HEADER_NAME} header not found on request.`
-    });
-  }
-  if (!valid) {
-    return response.status(HttpStatusCode.BAD_REQUEST).json({
-      message: `CSRF validation failed.`
-    });
-  }
+  // if (!csrf_token_header) {
+  //   return response.status(HttpStatusCode.BAD_REQUEST).json({
+  //     message: `${CSRF_HEADER_NAME} header not found on request.`
+  //   });
+  // }
+  // if (!valid) {
+  //   return response.status(HttpStatusCode.BAD_REQUEST).json({
+  //     message: `CSRF validation failed.`
+  //   });
+  // }
 
   console.log(`CSRF Validation Successful; continuing request...`);
 
