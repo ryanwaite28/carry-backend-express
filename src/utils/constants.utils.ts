@@ -3,6 +3,7 @@ export const codeCharacters = ['!', '@', '#', '$', '%', '&', '|', '*', ':', '-',
 export const allowedImages = ['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'];
 export const isAppEnvSet: boolean = ('APP_ENV' in process.env);
 export const isDevEnv: boolean = isAppEnvSet && process.env.APP_ENV === "DEV";
+export const isLocal: boolean = (process.env.NODE_ENV === 'production') && isAppEnvSet && process.env.APP_ENV === "LOCAL";
 export const isProd: boolean = (process.env.NODE_ENV === 'production') && isAppEnvSet && process.env.APP_ENV === "PROD";
 export const URL_REGEX = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
 export const BASE64_REGEX = /^data:([A-Za-z-+\/]+);base64,(.+)$/;

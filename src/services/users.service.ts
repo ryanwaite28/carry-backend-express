@@ -18,7 +18,7 @@ import { get_user_unseen_notifications_count } from '../repos/notifications.repo
 import { ExpoPushNotificationsService } from './expo-notifications.service';
 import { StripeService } from './stripe.service';
 import Stripe from 'stripe';
-import { create_card_payment_method_required_props, isProd } from '../utils/constants.utils';
+import { create_card_payment_method_required_props, isLocal, isProd } from '../utils/constants.utils';
 import { validateEmail, validatePassword } from '../utils/validators.utils';
 import { API_KEY_SUBSCRIPTION_PLAN } from '../enums/common.enum';
 import { HttpStatusCode } from '../enums/http-codes.enum';
@@ -2008,7 +2008,9 @@ export class UsersService {
     // fallback options
     const useUrl = isProd 
       ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
-      : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
+      : isLocal
+        ? `http://localhost/verify-stripe-account/${you.uuid}`
+        : `https://d2k2dtjp8tf6lv.cloudfront.net/verify-stripe-account/${you.uuid}`; // dev
 
     const useHost = host?.endsWith('/') ? host.substr(0, host.length - 1) : host;
     const refresh_url = `${useHost}/users/${you.id}/settings`;
@@ -2093,7 +2095,9 @@ export class UsersService {
 
     const useUrl = isProd 
       ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
-      : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
+      : isLocal
+        ? `http://localhost/verify-stripe-account/${you.uuid}`
+        : `https://d2k2dtjp8tf6lv.cloudfront.net/verify-stripe-account/${you.uuid}`; // dev
 
     // const useUrl = `carry://settings/`;
 
