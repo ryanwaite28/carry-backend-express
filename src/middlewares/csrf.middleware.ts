@@ -11,10 +11,10 @@ const CSRF_HEADER_NAME = `X-CSRF-TOKEN`;
 const CSRF_SAFE_METHODS = ['GET', 'OPTIONS', 'HEAD'];
 
 const useCookieDomain = isProd 
-  ? `d1j6zxrk2bh0fr.cloudfront.net`
+  ? `rmw-modern-server.herokuapp.com`
   : isLocal
     ? `localhost`
-    : `d2k2dtjp8tf6lv.cloudfront.net`;
+    : `rmw-modern-server-dev.herokuapp.com`;
 
 console.log({ useCookieDomain });
 
