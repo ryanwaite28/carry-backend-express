@@ -2009,7 +2009,7 @@ export class UsersService {
     const useUrl = isProd 
       ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
       : isLocal
-        ? `http://localhost/verify-stripe-account/${you.uuid}`
+        ? `http://192.168.4.135:5200/verify-stripe-account/${you.uuid}`
         : `https://d2k2dtjp8tf6lv.cloudfront.net/verify-stripe-account/${you.uuid}`; // dev
 
     const useHost = host?.endsWith('/') ? host.substr(0, host.length - 1) : host;
@@ -2026,15 +2026,21 @@ export class UsersService {
     if (!you.stripe_account_id) {
       account = await StripeService.stripe.accounts.create({
         type: 'express',
+        business_type: 'individual',
         email: you.email,
         capabilities: {
-          card_payments: { requested: true },
           transfers: { requested: true },
+        },
+        business_profile: {
+          product_description: `Modern Apps: ${process.env['APP_NAME']} - Service Provider`
+        },
+        metadata: {
+          user_id: you.id
         }
       });
       updates = await UserRepo.update_user({ stripe_account_id: account.id }, { id: you.id });
     } else {
-      account = await StripeService.stripe.accounts.retrieve(you.stripe_account_id);
+      account = await StripeService.stripe.accounts.retrieve(you.stripe_account_id, { expand: ['individual', 'individual.verification'] });
     }
 
     // https://stripe.com/docs/connect/collect-then-transfer-guide
@@ -2096,7 +2102,7 @@ export class UsersService {
     const useUrl = isProd 
       ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
       : isLocal
-        ? `http://localhost/verify-stripe-account/${you.uuid}`
+        ? `http://192.168.4.135:5200/verify-stripe-account/${you.uuid}`
         : `https://d2k2dtjp8tf6lv.cloudfront.net/verify-stripe-account/${you.uuid}`; // dev
 
     // const useUrl = `carry://settings/`;

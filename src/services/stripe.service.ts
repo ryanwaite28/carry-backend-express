@@ -131,29 +131,17 @@ export class StripeService {
   }
 
   static async account_is_complete(account_id: any) {
-    const stripe_account: Stripe.Account = await StripeService.stripe.accounts.retrieve(account_id);
+    const stripe_account: Stripe.Account = await StripeService.stripe.accounts.retrieve(account_id, { expand: ['individual', 'individual.verification'] });
 
-    console.log({ stripe_account });
-    console.log({
-      ...stripe_account.settings,
-      externa_accounts: stripe_account.external_accounts?.data,
-    });
+    console.log({ stripe_account: JSON.stringify(stripe_account) });
 
-    console.log({
-      charges_enabled: stripe_account.charges_enabled,
-      details_submitted: stripe_account.details_submitted,
-      capabilities: stripe_account.capabilities,
-      payouts_enabled: stripe_account.payouts_enabled,
-    });
+    // console.log({
+    //   charges_enabled: stripe_account.charges_enabled,
+    //   details_submitted: stripe_account.details_submitted,
+    //   capabilities: stripe_account.capabilities,
+    //   payouts_enabled: stripe_account.payouts_enabled,
+    // });
 
-    // if (!stripe_account.charges_enabled) {
-    //   return {
-    //     stripe_account,
-    //     error: true,
-    //     status: HttpStatusCode.PRECONDITION_FAILED,
-    //     message: `You must complete your stripe account onboarding: charges must be enabled`
-    //   };
-    // }
 
     if (!stripe_account.details_submitted) {
       return {
@@ -164,16 +152,59 @@ export class StripeService {
       };
     }
 
-    const hasNeededCapabilities = (
-      // (stripe_account.capabilities?.card_payments && stripe_account.capabilities.card_payments === 'active') &&
+    const accountCanAcceptTransfers = (
       (stripe_account.capabilities?.transfers && stripe_account.capabilities.transfers === 'active')
+      && stripe_account.payouts_enabled
     );
+    // const individualProvidedIdentity = !!stripe_account.individual && (
+    //   !!stripe_account.individual.first_name
+    //   && (!!stripe_account.individual.last_name || !!stripe_account.individual.maiden_name)
+    //   && !!stripe_account.individual.ssn_last_4_provided
+    //   && !!stripe_account.individual.dob
+    //   && (
+    //     !!stripe_account.individual.dob.day
+    //     && !!stripe_account.individual.dob.month
+    //     && !!stripe_account.individual.dob.year
+    //   )
+    // );
+    // const individualVerified = !!stripe_account.individual && (
+    //   stripe_account.individual.verification.status === 'verified'
+    //   && stripe_account.individual.verification.document 
+    //   && (
+    //     stripe_account.individual.verification.document.front
+    //     && stripe_account.individual.verification.document.back
+    //   )
+    // );
+
+    const allRequirementsMet = (
+      stripe_account.details_submitted
+      && stripe_account.requirements.currently_due.length === 0
+      && stripe_account.requirements.eventually_due.length === 0
+      && stripe_account.requirements.past_due.length === 0
+      && stripe_account.requirements.pending_verification.length === 0
+    );
+
+    const hasNeededCapabilities = (
+      accountCanAcceptTransfers
+      && allRequirementsMet
+      // && individualProvidedIdentity
+      // && individualVerified
+    );
+
+    console.log({
+      accountCanAcceptTransfers,
+      allRequirementsMet,
+      hasNeededCapabilities
+      // individualProvidedIdentity,
+      // individualVerified,
+    });
+
     if (!hasNeededCapabilities) {
       return {
         stripe_account,
         error: true,
         status: HttpStatusCode.PRECONDITION_FAILED,
-        message: `You must complete your stripe account onboarding: transfers must be enabled`
+        message: `You must complete your stripe account onboarding: transfers must be enabled, identity must be provided and verified (name, last 4 of social, ID/passport/document/etc)`
       };
     }
 
@@ -184,6 +215,61 @@ export class StripeService {
       message: `Stripe account connected and valid!`
     };
   }
+
+  // static async account_is_complete(account_id: any) {
+  //   const stripe_account: Stripe.Account = await StripeService.stripe.accounts.retrieve(account_id);
+
+  //   console.log({ stripe_account });
+  //   console.log({
+  //     ...stripe_account.settings,
+  //     externa_accounts: stripe_account.external_accounts?.data,
+  //   });
+
+  //   console.log({
+  //     charges_enabled: stripe_account.charges_enabled,
+  //     details_submitted: stripe_account.details_submitted,
+  //     capabilities: stripe_account.capabilities,
+  //     payouts_enabled: stripe_account.payouts_enabled,
+  //   });
+
+  //   // if (!stripe_account.charges_enabled) {
+  //   //   return {
+  //   //     stripe_account,
+  //   //     error: true,
+  //   //     status: HttpStatusCode.PRECONDITION_FAILED,
+  //   //     message: `You must complete your stripe account onboarding: charges must be enabled`
+  //   //   };
+  //   // }
+
+  //   if (!stripe_account.details_submitted) {
+  //     return {
+  //       stripe_account,
+  //       error: true,
+  //       status: HttpStatusCode.PRECONDITION_FAILED,
+  //       message: `You must complete your stripe account onboarding: all required details must be submitted`
+  //     };
+  //   }
+
+  //   const hasNeededCapabilities = (
+  //     // (stripe_account.capabilities?.card_payments && stripe_account.capabilities.card_payments === 'active') &&
+  //     (stripe_account.capabilities?.transfers && stripe_account.capabilities.transfers === 'active')
+  //   );
+  //   if (!hasNeededCapabilities) {
+  //     return {
+  //       stripe_account,
+  //       error: true,
+  //       status: HttpStatusCode.PRECONDITION_FAILED,
+  //       message: `You must complete your stripe account onboarding: transfers must be enabled`
+  //     };
+  //   }
+
+  //   return {
+  //     stripe_account,
+  //     error: false,
+  //     status: HttpStatusCode.OK,
+  //     message: `Stripe account connected and valid!`
+  //   };
+  // }
 
   static async get_connected_account_cards_payment_methods(stripe_customer_id: string) {
     const paymentMethods = await StripeService.stripe.accounts

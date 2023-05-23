@@ -79,10 +79,22 @@ export class StripeWebhookEventsRequestHandler {
         var billingPortalBilling = event.data.object;
         // Then define and call a function to handle the event billing_portal.configuration.updated
         break;
-      case 'capability.updated':
-        var capability = event.data.object;
+      case 'capability.updated': {
+        var capability: Stripe.Capability = event.data.object;
         // Then define and call a function to handle the event capability.updated
+        if (typeof capability.account !== 'string') {
+          const account: Stripe.Account = capability.account;
+          // Then define and call a function to handle the event account.updated
+          console.log(`Searching for user by stripe connected account id:`, account.id);
+          const check_user = await get_user_by_stripe_connected_account_id(account.id);
+          console.log({ check_user });
+          if (check_user) {
+            console.log(`Verifying stripe account for ${account.id}`);
+            UsersService.verify_stripe_account(check_user, '', false);
+          }
+        }
         break;
+      }
       case 'charge.captured':
         var charge = event.data.object;
         // Then define and call a function to handle the event charge.captured
