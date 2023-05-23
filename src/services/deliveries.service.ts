@@ -1139,12 +1139,12 @@ export class DeliveriesService {
     const delivering_inprogress_count =
       await get_user_delivering_inprogress_count(you.id);
 
-    if (delivering_inprogress_count === 2) {
+    if (delivering_inprogress_count === 3) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.FORBIDDEN,
         error: true,
         info: {
-          message: `Users can only claim at most 2 deliveries at a time.`,
+          message: `Users can only claim at most 3 deliveries at a time.`,
         },
       };
       return serviceMethodResults;
