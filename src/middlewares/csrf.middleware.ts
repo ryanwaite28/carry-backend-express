@@ -3,6 +3,7 @@ import moment from "moment";
 import { HttpStatusCode } from "../enums/http-codes.enum";
 import { v1 as uuidv1 } from "uuid";
 import { isLocal, isProd } from "src/utils/constants.utils";
+import { AppEnvironment } from "src/utils/app.enviornment";
 
 
 
@@ -10,18 +11,12 @@ const CSRF_COOKIE_NAME = `CSRF-TOKEN`;
 const CSRF_HEADER_NAME = `X-CSRF-TOKEN`;
 const CSRF_SAFE_METHODS = ['GET', 'OPTIONS', 'HEAD'];
 
-const useCookieDomain = isProd 
-  ? `rmw-modern-server.herokuapp.com`
-  : isLocal
-    ? `localhost`
-    : `rmw-modern-server-dev.herokuapp.com`;
 
-console.log({ useCookieDomain });
 
 const cookieOptions: CookieOptions = {
   httpOnly: false,
   path: `/`,
-  domain: useCookieDomain,
+  domain: AppEnvironment.USE_CLIENT_DOMAIN_URL,
   sameSite: 'none',
   secure: true,
   // expires: moment().add(1, 'hour').toDate()

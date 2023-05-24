@@ -31,6 +31,7 @@ module.exports = (env) => {
       new CopyPlugin({
         patterns: [
           { from: './.env', to: '' },
+          { from: './assets', to: 'assets' },
         ],
       })
     );

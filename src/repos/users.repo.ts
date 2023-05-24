@@ -31,6 +31,17 @@ export async function get_user_by_where(
   return user_model;
 }
 
+export function get_user_by_username_or_email(email_or_username: string) {
+  return Users.findOne({
+    where: {
+      [Op.or]: [
+        { email: email_or_username },
+        { username: email_or_username }
+      ]
+    }
+  });
+}
+
 export async function create_user(
   params: {
     firstname: string;

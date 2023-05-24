@@ -1,6 +1,7 @@
 
 import * as dotenv from 'dotenv';
 dotenv.config();
+console.log(`process.env:`, process.env);
 
 
 
@@ -15,7 +16,7 @@ import express_fileupload from 'express-fileupload';
 import * as body_parser from 'body-parser';
 import * as cookie_parser from 'cookie-parser';
 import { SocketsService } from './services/sockets.service';
-import { isProd, WHITELIST_DOMAINS } from './utils/constants.utils';
+import { isProd } from './utils/constants.utils';
 import { uniqueValue } from './utils/helpers.utils';
 import { StripeService } from './services/stripe.service';
 import { StripeWebhookEventsRequestHandler } from './services/stripe-webhook-events.service';
@@ -23,6 +24,7 @@ import { CarryRouter } from './routers/_carry.router';
 import { carry_db_init } from './models/_def.model';
 import { installExpressApp } from './utils/template-engine.utils';
 import { RequestLoggerMiddleware } from './middlewares/request-logger.middleware';
+import { AppEnvironment } from './utils/app.enviornment';
 
 
 
@@ -52,13 +54,13 @@ const appServer: http.Server = http.createServer(app);
 
 const io: Server = new Server(appServer, {
   cors: {
-    origin: WHITELIST_DOMAINS,
+    origin: AppEnvironment.CORS.WHITELIST,
   },
 
   allowRequest: (req, callback) => {
     console.log(`socket req origin: ${req.headers.origin}`);
     const useOrigin = (req.headers.origin || '');
-    const originIsAllowed = !isProd || WHITELIST_DOMAINS.includes(useOrigin);
+    const originIsAllowed = !isProd || AppEnvironment.CORS.WHITELIST.includes(useOrigin);
     console.log({ originIsAllowed });
     callback(null, originIsAllowed);
   }
@@ -100,10 +102,9 @@ app.use('/', CarryRouter);
 
 
 /** Static file declaration */
-
-const publicPath = path.join(__dirname, '../_public');
-const expressStaticPublicPath = express.static(publicPath);
-app.use(expressStaticPublicPath);
+const assetsPath = path.join(__dirname, 'assets');
+console.log({ assetsPath });
+app.use(express.static(assetsPath));
 
 /** init database */
 console.log(`PORT = ${PORT}\n`);

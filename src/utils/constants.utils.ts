@@ -7,13 +7,13 @@ export const isLocal: boolean = isAppEnvSet && process.env.APP_ENV === "LOCAL";
 export const isProd: boolean = isAppEnvSet && process.env.APP_ENV === "PROD";
 export const URL_REGEX = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
 export const BASE64_REGEX = /^data:([A-Za-z-+\/]+);base64,(.+)$/;
-export const WHITELIST_DOMAINS = process.env[`CORS_WHITELIST_ORIGINS`] ? process.env[`CORS_WHITELIST_ORIGINS`].split(',') : [];
 
-console.log({
-  isAppEnvSet,
-  isDevEnv,
-  isProd
-});
+// console.log({
+//   isAppEnvSet,
+//   isDevEnv,
+//   isProd,
+//   USE_CLIENT_DOMAIN_URL
+// });
 
 
 
@@ -31,6 +31,7 @@ import { get_delivery_by_id, get_delivery_tracking_update_by_id, get_delivery_di
 import { get_user_by_id } from "../repos/users.repo";
 import { getUserFullName } from "./helpers.utils";
 import { genericTextValidator, stripeValidators, numberValidator, booleanValidator, validatePersonName, phoneValidator, validateEmail } from "./validators.utils";
+import { AppEnvironment } from "./app.enviornment";
 
 export const user_attrs_slim = [
   'id',
@@ -571,7 +572,7 @@ export const corsOptions: CorsOptions = {
   optionsSuccessStatus: 200,
   origin(origin: string | undefined, callback: any) {
     const useOrigin = (origin || '');
-    const originIsAllowed = WHITELIST_DOMAINS.includes(useOrigin);
+    const originIsAllowed = AppEnvironment.CORS.WHITELIST.includes(useOrigin);
     // console.log({
     //   origin,
     //   callback,
@@ -594,7 +595,7 @@ export const corsMobileOptions: CorsOptions = {
   origin(origin: string | undefined, callback: any) {
     // console.log(`mobile request:`, { origin });
     const useOrigin = (origin || '');
-    const originIsAllowed = !useOrigin || WHITELIST_DOMAINS.includes(useOrigin);
+    const originIsAllowed = !useOrigin || AppEnvironment.CORS.WHITELIST.includes(useOrigin);
     // console.log({
     //   origin,
     //   callback,

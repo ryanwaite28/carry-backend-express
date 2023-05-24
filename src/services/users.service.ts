@@ -2,10 +2,7 @@ import { Request } from 'express';
 import { UploadedFile } from 'express-fileupload';
 import * as bcrypt from 'bcrypt-nodejs';
 import {
-  fn,
-  Op,
-  col,
-  cast
+  
 } from 'sequelize';
 import * as UserRepo from '../repos/users.repo';
 import * as EmailVerfRepo from '../repos/email-verification.repo';
@@ -18,7 +15,7 @@ import { get_user_unseen_notifications_count } from '../repos/notifications.repo
 import { ExpoPushNotificationsService } from './expo-notifications.service';
 import { StripeService } from './stripe.service';
 import Stripe from 'stripe';
-import { create_card_payment_method_required_props, isLocal, isProd } from '../utils/constants.utils';
+import { create_card_payment_method_required_props } from '../utils/constants.utils';
 import { validateEmail, validatePassword } from '../utils/validators.utils';
 import { API_KEY_SUBSCRIPTION_PLAN } from '../enums/common.enum';
 import { HttpStatusCode } from '../enums/http-codes.enum';
@@ -29,6 +26,9 @@ import { send_verify_sms_request, cancel_verify_sms_request, check_verify_sms_re
 import { SignedUp_EMAIL, PasswordReset_EMAIL, PasswordResetSuccess_EMAIL, VerifyEmail_EMAIL } from '../utils/template-engine.utils';
 import { CommonSocketEventsHandler } from './common.socket-event-handler';
 import { CARRY_EVENT_TYPES } from 'src/enums/carry.enum';
+import { AppEnvironment } from 'src/utils/app.enviornment';
+import { HandlebarsEmailsService } from './emails.service';
+import { sendAwsEmail } from 'src/utils/ses.aws.utils';
 
 
 
@@ -657,36 +657,27 @@ export class UsersService {
         email: new_user.email
       });
       const new_email_verf: PlainObject = new_email_verf_model.get({ plain: true });
+      const verify_link = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-stripe-account/${new_email_verf.uuid}`;
 
-      const verify_link = (<string> request_origin).endsWith('/')
-        ? (request_origin + 'modern/verify-email/' + new_email_verf.verification_code)
-        : (request_origin + '/modern/verify-email/' + new_email_verf.verification_code);
-      const email_subject = `${process.env.APP_NAME} - Signed Up!`;
-      const userName = `${new_user.firstname} ${new_user.lastname}`;
-      const email_html = SignedUp_EMAIL({
-        ...new_user,
-        name: userName,
+      const user_name: string = `${new_user.firstname} ${new_user.lastname}`;
+      const email_html = HandlebarsEmailsService.USERS.welcome.template({
         verify_link,
-        appName: process.env.APP_NAME
+        user_name,
+        app_name: AppEnvironment.APP_NAME.DISPLAY,
       });
 
       // don't "await" for email response.
-      const send_email_params = {
+      sendAwsEmail({
         to: new_user.email,
-        name: userName,
-        subject: email_subject,
-        html: email_html
-      };
-      send_email(send_email_params)
-        .then((email_results) => {
-          console.log(`sign up email sent successfully to:`, email);
-        })
-        .catch((error) => {
-          console.log({ email_error: error });
-        });
-    } catch (e) {
+        html: email_html,
+        subject: AppEnvironment.APP_NAME.DISPLAY,
+      });
+    }
+    catch (e) {
       console.log(`could not sent sign up email:`, e, { new_user });
     }
+
+
 
     // create JWT
     const jwt = TokensService.newUserJwtToken(new_user);
@@ -731,14 +722,7 @@ export class UsersService {
         return serviceMethodResults;
       }
 
-      const check_account_model = await Users.findOne({
-        where: {
-          [Op.or]: [
-            { email: email_or_username },
-            { username: email_or_username }
-          ]
-        }
-      });
+      const check_account_model = await UserRepo.get_user_by_username_or_email(email_or_username);
       if (!check_account_model) {
         const serviceMethodResults: ServiceMethodResults = {
           status: HttpStatusCode.UNAUTHORIZED,
@@ -2006,15 +1990,9 @@ export class UsersService {
 
     
     // fallback options
-    const useUrl = isProd 
-      ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
-      : isLocal
-        ? `http://192.168.4.135:5200/verify-stripe-account/${you.uuid}`
-        : `https://d2k2dtjp8tf6lv.cloudfront.net/verify-stripe-account/${you.uuid}`; // dev
-
-    const useHost = host?.endsWith('/') ? host.substr(0, host.length - 1) : host;
-    const refresh_url = `${useHost}/users/${you.id}/settings`;
-    const return_url = `${useHost}/users/${you.id}/verify-stripe-account`;
+    const useUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-stripe-account/${you.uuid}`;
+    const refresh_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/settings`;
+    const return_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/verify-stripe-account`;
     
     const check_verified = await UsersService.verify_stripe_account(you, host, false, refreshUrl, redirectUrl);
     if (check_verified.status === HttpStatusCode.OK) {
@@ -2099,11 +2077,9 @@ export class UsersService {
 
     let accountLinks: PlainObject = {};
 
-    const useUrl = isProd 
-      ? `https://d1j6zxrk2bh0fr.cloudfront.net/verify-stripe-account/${you.uuid}`
-      : isLocal
-        ? `http://192.168.4.135:5200/verify-stripe-account/${you.uuid}`
-        : `https://d2k2dtjp8tf6lv.cloudfront.net/verify-stripe-account/${you.uuid}`; // dev
+    const useUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-stripe-account/${you.uuid}`;
+    const refresh_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/settings`;
+    const return_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/verify-stripe-account`;
 
     // const useUrl = `carry://settings/`;
 
@@ -2217,10 +2193,6 @@ export class UsersService {
     console.log({ results });
 
     let accountLinks: PlainObject = {};
-
-    // const useUrl = isProd 
-    //   ? `http://modernapps.ml/verify-stripe-account/${you.uuid}`
-    //   : `http://modernapps.cf/verify-stripe-account/${you.uuid}`;
 
     const useUrl = `carry://settings/`;
     
