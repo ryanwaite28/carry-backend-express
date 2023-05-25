@@ -1,7 +1,7 @@
 
 import * as dotenv from 'dotenv';
 import { exec } from 'child_process';
-import {  } from 'os';
+// import {  } from 'os';
 dotenv.config();
 console.log(`process.env:`, process.env);
 console.log(`__dirname`, __dirname);
