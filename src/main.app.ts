@@ -39,13 +39,8 @@ exec('ls -atl', (err, stdout, stderr) => {
 import express, { Request, Response } from 'express';
 import * as path from 'path';
 import { Server } from "socket.io";
-import { ExpressPeerServer } from 'peer';
 import * as http from 'http';
 
-import express_device from 'express-device';
-import express_fileupload from 'express-fileupload';
-import * as body_parser from 'body-parser';
-import * as cookie_parser from 'cookie-parser';
 import { SocketsService } from './services/sockets.service';
 import { isProd } from './utils/constants.utils';
 import { uniqueValue } from './utils/helpers.utils';
