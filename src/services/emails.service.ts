@@ -6,11 +6,18 @@ import { AppEnvironment } from 'src/utils/app.enviornment';
 
 
 const get_html_file_as_string = (construct: string, filename: string) => {
-  const html_file_path = join(__dirname, 'assets', 'email-templates', construct, filename);
-  const fileExists = existsSync(html_file_path);
+  let html_file_path = join(__dirname, 'assets', 'email-templates', construct, filename);
+  let fileExists = existsSync(html_file_path);
   console.log(`html_file_path:`, { html_file_path, fileExists });
   if (!fileExists) {
-    console.log(`File does not exist...`);
+    console.log(`File does not exist, trying parent directory...`);
+    html_file_path = join(__dirname, '../', 'assets', 'email-templates', construct, filename);
+    fileExists = existsSync(html_file_path);
+
+    console.log(`html_file_path:`, { html_file_path, fileExists });
+    if (!fileExists) {
+      console.log(`File does not exist, trying parent directory...`);
+    }
   }
   const content = readFileSync(html_file_path, 'utf8').toString();
   return content;

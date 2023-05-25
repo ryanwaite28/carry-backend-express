@@ -128,7 +128,7 @@ app.use('/', CarryRouter);
 
 
 /** Static file declaration */
-const assetsPath = path.join(__dirname, 'assets');
+const assetsPath = path.join(__dirname, '../', 'assets');
 console.log({ assetsPath });
 app.use(express.static(assetsPath));
 
