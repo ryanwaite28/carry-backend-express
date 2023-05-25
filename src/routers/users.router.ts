@@ -71,7 +71,7 @@ UsersRouter.put('/:you_id/password', YouAuthorized, UsersRequestHandler.update_p
 UsersRouter.put('/:you_id/phone', YouAuthorized, UsersRequestHandler.update_phone);
 UsersRouter.put('/:you_id/icon', YouAuthorized, UsersRequestHandler.update_icon);
 UsersRouter.put('/:you_id/wallpaper', YouAuthorized, UsersRequestHandler.update_wallpaper);
-UsersRouter.put('/:you_id/register-expo-device-and-push-token', YouAuthorized, UsersRequestHandler.register_expo_device_and_push_token);
+UsersRouter.put('/:you_id/register-expo-push-token', YouAuthorized, UsersRequestHandler.register_expo_device_and_push_token);
 UsersRouter.put('/:you_id/create-stripe-account', YouAuthorized, UsersRequestHandler.create_stripe_account);
 UsersRouter.put('/:you_id/verify-stripe-account', YouAuthorized, UsersRequestHandler.verify_stripe_account);
 UsersRouter.put('/:user_uuid/verify-stripe-account-by-uuid', UsersRequestHandler.verify_stripe_account_by_uuid);
@@ -80,7 +80,7 @@ UsersRouter.put('/:you_id/verify-customer-has-cards', YouAuthorized, UsersReques
 // DELETE
 UsersRouter.delete('/:you_id/customer-cards-payment-methods/:payment_method_id', YouAuthorized, UsersRequestHandler.remove_card_payment_method_to_user_customer);
 
-UsersRouter.delete('/:you_id/remove-expo-device-and-push-token/:expo_token', YouAuthorized, UsersRequestHandler.remove_expo_device_and_push_token);
+UsersRouter.delete('/:you_id/remove-expo-push-token/:expo_token', YouAuthorized, UsersRequestHandler.remove_expo_device_and_push_token);
 
 
 
