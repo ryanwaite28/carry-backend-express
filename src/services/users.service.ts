@@ -657,7 +657,7 @@ export class UsersService {
         email: new_user.email
       });
       const new_email_verf: PlainObject = new_email_verf_model.get({ plain: true });
-      const verify_link = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-stripe-account/${new_email_verf.uuid}`;
+      const verify_link = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-email/${new_email_verf.verification_code}`;
 
       const user_name: string = `${new_user.firstname} ${new_user.lastname}`;
       const email_html = HandlebarsEmailsService.USERS.welcome.template({
@@ -1914,11 +1914,7 @@ export class UsersService {
       }
     }
 
-    const new_push_token_registration = await UserRepo.register_expo_device_and_push_token(
-      you_id,
-      data.expo_token,
-      data.device_info
-    );
+    const new_push_token_registration = await UserRepo.register_expo_device_and_push_token(you_id, data.expo_token);
 
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import express_device from 'express-device';
 import express_fileupload from 'express-fileupload';
 import * as body_parser from 'body-parser';
@@ -52,5 +52,17 @@ CarryMobileRouter.use('/users', UsersRouter);
 CarryMobileRouter.use('/deliveries', DeliveriesRouter);
 CarryMobileRouter.use('/common', CommonRouter);
 
-CarryRouter.use(`/web`, CarryWebRouter);
-CarryRouter.use(`/mobile`, CarryMobileRouter);
+
+
+export function setWebContext(request: Request, response: Response, next: NextFunction) {
+  response.locals['IS_MOBILE'] = false;
+  next();
+}
+
+export function setMobileContext(request: Request, response: Response, next: NextFunction) {
+  response.locals['IS_MOBILE'] = true;
+  next();
+}
+
+CarryRouter.use(`/web`, setWebContext, CarryWebRouter);
+CarryRouter.use(`/mobile`, setMobileContext, CarryMobileRouter);
