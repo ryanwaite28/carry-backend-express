@@ -4,6 +4,7 @@ import { REQUESTS_FILE_LOGGER } from "src/utils/logger.utils";
 
 export function RequestLoggerMiddleware(request: Request, response: Response, next: NextFunction) {
   const requestData = {
+    timestamp: Date.now(),
     url: request.url,
     method: request.method,
     body: request.body,
@@ -16,9 +17,9 @@ export function RequestLoggerMiddleware(request: Request, response: Response, ne
     signed_cookies: request.signedCookies,
   };
 
-  // console.log(`\n\n\n======= BEGIN RequestLoggerMiddleware =======`);
-  // console.log();
-  // console.log(`======= NEXT =======\n\n\n`);
+  console.log(`\n\n\n======= BEGIN RequestLoggerMiddleware =======`);
+  console.log(requestData);
+  console.log(`======= NEXT =======\n\n\n`);
 
   REQUESTS_FILE_LOGGER.info(`request data:`, {
     request: requestData

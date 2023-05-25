@@ -1,7 +1,10 @@
 
 import * as dotenv from 'dotenv';
+import {  } from 'os';
 dotenv.config();
 console.log(`process.env:`, process.env);
+console.log(`__dirname`, __dirname);
+console.log(`cwd`, process.cwd());
 
 
 
