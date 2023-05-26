@@ -1,10 +1,22 @@
 import { NextFunction, Request, Response } from "express";
 import { REQUESTS_FILE_LOGGER } from "src/utils/logger.utils";
+import moment from "moment";
+
+
+enum MomentFormats {
+  FULL = `MMM DD YYYY - h:mm:ss a`,
+}
+const dateTimeTransform = (value: string | Date | number, format: string = MomentFormats.FULL): string => {
+  const datetime = moment(value).format(format);
+  return datetime;
+};
 
 
 export function RequestLoggerMiddleware(request: Request, response: Response, next: NextFunction) {
   const requestData = {
     timestamp: Date.now(),
+    datetime: dateTimeTransform(new Date()),
+    
     url: request.url,
     method: request.method,
     body: request.body,

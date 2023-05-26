@@ -4,6 +4,7 @@ build/
 dist/
 logs/
 .env
+dev.env
 ./*.png
 ./*.jpg
 ./*.jpeg
