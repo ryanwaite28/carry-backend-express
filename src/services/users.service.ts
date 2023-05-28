@@ -2001,7 +2001,7 @@ export class UsersService {
       account = await StripeService.stripe.accounts.create({
         type: 'express',
         business_type: 'individual',
-        email: you.email,
+        // email: you.email,
         capabilities: {
           transfers: { requested: true },
         },

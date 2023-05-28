@@ -29,7 +29,8 @@ import {
   Delivery,
   DeliveryDisputeCustomerSupportMessages,
   CarryUserProfileSettings,
-  CarryUserRatings
+  CarryUserRatings,
+  DeliveryInsurances
 } from '../models/delivery.model';
 import { delivery_search_attrs } from '../utils/carry.chamber';
 import { user_attrs_slim } from '../utils/constants.utils';
@@ -90,6 +91,10 @@ export const deliveryMasterIncludes: Includeable[] = [
     model: DeliveryDisputes,
     as: `delivery_dispute`,
     // include: 
+  },
+  {
+    model: DeliveryInsurances,
+    as: `delivery_insurance`,
   },
   {
     model: DeliveryCarrierTrackLocationRequests,
@@ -286,6 +291,15 @@ export function get_delivery_by_id(id: number) {
   .then(convertDeliveryModel);
 }
 
+export function get_delivery_by_payment_intent_id(payment_intent_id: string, slim: boolean = false) {
+  return Delivery.findOne({
+    where: { payment_intent_id },
+    include: slim ? [] : deliveryMasterIncludes,
+    // order: deliveryTrackingOrderBy,
+  })
+  .then(convertDeliveryModel);
+}
+
 export function get_delivery_slim_by_id(id: number) {
   return Delivery.findOne({
     where: { id },
@@ -296,12 +310,22 @@ export function get_delivery_slim_by_id(id: number) {
 }
 
 export function create_delivery(
-  createObj: ICreateDeliveryProps
+  createObj: ICreateDeliveryProps,
+  insured_amount?: number
 ) {
   return Delivery.create(<any> createObj, {
     include: deliveryMasterIncludes,
   })
-  .then((model: IMyModel) => convertDeliveryModel(model)!);
+  .then(async (model) => {
+    if (insured_amount) {
+      await DeliveryInsurances.create({
+        delivery_id: model.dataValues.id,
+        amount_paid: insured_amount
+      });
+    }
+
+    return get_delivery_by_id(model.dataValues.id);
+  });
 }
 
 export async function update_delivery(

@@ -427,6 +427,20 @@ export const DeliveryCarrierTrackLocationRequests = <MyModelStatic> sequelize.de
   uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
 
+export const DeliveryInsurances = <MyModelStatic> sequelize.define('carry_delivery_insurances', {
+  id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  delivery_id:        { type: Sequelize.INTEGER, allowNull: true, references: { model: Delivery, key: 'id' } },
+  insurance_type:     { type: Sequelize.STRING, allowNull: true },
+  amount_insured:     { type: Sequelize.INTEGER, allowNull: true },
+  amount_paid:        { type: Sequelize.INTEGER, allowNull: false },
+  
+  date_created:       { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+
+// DeliveryInsurances.sync({ alter: true });
+
 export const DeliveryCarrierTrackLocationUpdates = <MyModelStatic> sequelize.define('carry_delivery_carrier_track_location_updates', {
   id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
   delivery_id:        { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
@@ -693,6 +707,8 @@ DeliveryTrackingUpdates.belongsTo(Delivery, { as: 'delivery', foreignKey: 'deliv
 Users.hasMany(DeliveryTrackingUpdates, { as: 'deliverme_user_tracking_updates', foreignKey: 'user_id', sourceKey: 'id' });
 DeliveryTrackingUpdates.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
 
+Delivery.hasOne(DeliveryInsurances, { as: 'delivery_insurance', foreignKey: 'delivery_id', sourceKey: 'id' });
+DeliveryInsurances.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
 
 Users.hasMany(DeliveryMessages, { as: 'delivery_messages_sent', foreignKey: 'user_id', sourceKey: 'id' });
 DeliveryMessages.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });

@@ -851,6 +851,20 @@ export const populate_carry_notification_obj = async (
       notificationObj.dispute = dispute;
       break;
     }
+
+    case CARRY_EVENT_TYPES.CARRIER_PAYOUT_CLAIMED: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} claimed the payout for delivery: ${
+        delivery!.title
+      }`;
+      mount_prop_key = "delivery";
+      mount_value = delivery;
+
+      notificationObj.delivery = delivery;
+      break;
+    }
   }
 
   notificationObj.from = user_model!;

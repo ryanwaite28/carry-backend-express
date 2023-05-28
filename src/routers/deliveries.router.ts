@@ -55,8 +55,8 @@ DeliveriesRouter.post('/browse-recent/:delivery_id', YouAuthorizedSlimWeak, Deli
 DeliveriesRouter.post('/browse-map/swlat/:swlat/swlng/:swlng/nelat/:nelat/nelng/:nelng', YouAuthorizedSlimWeak, DeliveriesRequestHandler.browse_map_deliveries);
 
 DeliveriesRouter.post('/:delivery_id/message', YouAuthorizedSlim, DeliveryExists, DeliveriesRequestHandler.send_delivery_message);
-DeliveriesRouter.post('/:delivery_id/pay-carrier', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.pay_carrier);
-// DeliveriesRouter.post('/:delivery_id/create-payment-intent', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.create_payment_intent);
+DeliveriesRouter.post('/:delivery_id/pay-carrier', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.pay_carrier_via_transfer);
+DeliveriesRouter.post('/:delivery_id/carrier-self-pay', YouAuthorizedSlim, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.carrier_self_pay);
 DeliveriesRouter.post('/:delivery_id/payment-success', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.payment_success);
 DeliveriesRouter.post('/:delivery_id/payment-cancel', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.payment_cancel);
 

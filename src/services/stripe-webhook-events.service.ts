@@ -3,6 +3,7 @@ import { get_user_by_stripe_connected_account_id, get_user_by_stripe_customer_ac
 import Stripe from 'stripe';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { UsersService } from './users.service';
+import { get_delivery_by_id, get_delivery_by_payment_intent_id } from 'src/repos/deliveries.repo';
 
 
 
@@ -443,10 +444,23 @@ export class StripeWebhookEventsRequestHandler {
         var paymentIntent = event.data.object;
         // Then define and call a function to handle the event payment_intent.amount_capturable_updated
         break;
-      case 'payment_intent.canceled':
-        var paymentIntent = event.data.object;
+      case 'payment_intent.canceled': {
         // Then define and call a function to handle the event payment_intent.canceled
+        const paymentIntent: Stripe.PaymentIntent = event.data.object;
+        /* 
+          Check if the metadata has a delivery id attached. If so, then only two things are possible:
+          - delivery was not taken and completed within 7 days
+          - the delivery listing was deleted
+        */
+
+        // check if the delivery listing is deleted; if so, the owner canceled the listing and the hold was already released upon that delete request
+        const delivery = get_delivery_by_payment_intent_id(paymentIntent.id);
+        if (!delivery) {
+          return;
+        }
+        // delivery not deleted/still active. check if delivery was dropped off. if so, assume service was completed
         break;
+      }
       case 'payment_intent.created':
         var paymentIntent = event.data.object;
         // Then define and call a function to handle the event payment_intent.created

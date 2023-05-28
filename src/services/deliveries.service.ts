@@ -101,9 +101,19 @@ import { STATUSES, STRIPE_ACTION_EVENTS, TRANSACTION_STATUS } from '../enums/com
 
 
 
+// enum of insurance amounts by as-of dates
+enum DeliveryInsuranceAmounts {
+  MAY_2023 = 10,
+}
+
+enum DeliveryInsuranceCoverageAmounts {
+  MAY_2023 = 500,
+}
+
 
 
 export class DeliveriesService {
+
   static async find_available_delivery_by_from_city_and_state(
     city: string,
     state: string,
@@ -616,15 +626,17 @@ export class DeliveriesService {
   static async create_delivery_and_charge(options: {
     you: IUser;
     data: any;
+    insured: boolean,
     delivery_image?: UploadedFile;
   }) {
+    console.log(`create delivery options:`, options);
     try {
       const { you, data, delivery_image } = options;
       const createObj: PlainObject = {
         owner_id: you.id,
       };
 
-      // validate inputs
+      // validate form
       const dataValidation = validateData({
         data,
         validators: create_delivery_required_props,
@@ -634,6 +646,7 @@ export class DeliveriesService {
         return dataValidation;
       }
 
+      // validate image
       const imageValidation = await validateAndUploadImageFile(delivery_image, {
         treatNotFoundAsError: false,
         mutateObj: createObj,
@@ -645,11 +658,10 @@ export class DeliveriesService {
       }
 
       // make sure payment method belongs to user
-      const userPaymentMethodsResults =
-        await StripeService.payment_method_belongs_to_customer(
-          you.stripe_customer_account_id,
-          data.payment_method_id,
-        );
+      const userPaymentMethodsResults = await StripeService.payment_method_belongs_to_customer(
+        you.stripe_customer_account_id,
+        data.payment_method_id,
+      );
       if (userPaymentMethodsResults.error) {
         const serviceMethodResults: ServiceMethodResults = {
           status: userPaymentMethodsResults.status,
@@ -662,63 +674,55 @@ export class DeliveriesService {
       }
 
       // all inputs validated
-      console.log(`createObj`, createObj);
+      console.log(`delivery createObj`, createObj);
 
-      // try charging customer for delivery listing
+
+      // try placing hold on customer's payment method for delivery listing
       let payment_intent: Stripe.PaymentIntent;
-      // let charge: Stripe.Charge;
 
       const is_subscription_active: boolean = (
         await UsersService.is_subscription_active(you)
       ).info.data as boolean;
       const chargeFeeData = StripeService.add_on_stripe_processing_fee(
-        createObj.payout,
+        createObj.payout + (options.insured ? DeliveryInsuranceAmounts.MAY_2023 : 0),
         is_subscription_active,
       );
 
       try {
         // https://stripe.com/docs/payments/save-during-payment
-
+        // https://stripe.com/docs/payments/place-a-hold-on-a-payment-method
+        // https://stripe.com/docs/api/payment_intents/update
         payment_intent = await StripeService.stripe.paymentIntents.create({
           description: `${process.env.APP_NAME} - New delivery listing: ${createObj.title}`,
           amount: chargeFeeData.final_total,
           currency: 'usd',
           customer: you.stripe_customer_account_id,
           payment_method: data.payment_method_id,
+          capture_method: 'manual', // place hold
           off_session: true,
           confirm: true,
+          receipt_email: you.email
         });
-
-        // charge = await StripeService.stripe.charges.create({
-        //   description: `${process.env.APP_NAME} - new delivery listing: ${createObj.title}`,
-        //   amount: chargeFeeData.final_total,
-        //   currency: 'usd',
-        //   source: data.payment_method_id,
-        // });
-      } catch (e) {
+      }
+      catch (e) {
         console.log(e);
         const serviceMethodResults: ServiceMethodResults = {
           status: HttpStatusCode.BAD_REQUEST,
           error: true,
           info: {
-            message: `Could not charge payment method`,
+            message: `Could not place hold on payment method`,
             error: e,
           },
         };
         return serviceMethodResults;
       }
 
-      // charge was successful; create the delivery listing
+      // hold was successful; create the delivery listing
 
       createObj.payment_intent_id = payment_intent.id;
-      // createObj.charge_id = charge.id;
-
-      const new_delivery_model = await create_delivery(
-        createObj as ICreateDeliveryProps,
-      );
+      const new_delivery_model = await create_delivery(createObj as ICreateDeliveryProps, DeliveryInsuranceAmounts.MAY_2023);
 
       // record the charge
-
       const payment_intent_action = await StripeActions.create({
         action_event: STRIPE_ACTION_EVENTS.PAYMENT_INTENT,
         action_id: payment_intent.id,
@@ -740,14 +744,17 @@ export class DeliveriesService {
       //   status:                              TRANSACTION_STATUS.COMPLETED,
       // });
 
-      // update charge metadata with delivery id
-
+      // update payment intent metadata with delivery id
       payment_intent = await StripeService.stripe.paymentIntents.update(
         payment_intent.id,
         {
           metadata: {
             delivery_id: new_delivery_model.id,
+            delivery_payout: new_delivery_model.payout,
+            insured_amount: (options.insured ? DeliveryInsuranceAmounts.MAY_2023 : 0),
             was_subscribed: is_subscription_active ? 'true' : 'false',
+            insured: (!!options.insured).toString(),
+            timestamp: Date.now(),
           },
         },
       );
@@ -781,7 +788,8 @@ export class DeliveriesService {
         },
       };
       return serviceMethodResults;
-    } catch (e) {
+    } 
+    catch (e) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.INTERNAL_SERVER_ERROR,
         error: true,
@@ -944,51 +952,23 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    // try to refund the charge
-
+    // try to release hold
     if (delivery.payment_intent_id) {
       const payment_intent = await StripeService.stripe.paymentIntents.retrieve(
         delivery.payment_intent_id,
       );
-      let refund: Stripe.Refund;
 
-      const was_subscribed: boolean =
-        payment_intent.metadata['was_subscribed'] === 'true' ? true : false;
-
-      const chargeFeeData = StripeService.add_on_stripe_processing_fee(
-        delivery.payout,
-        was_subscribed,
-      );
-
+      console.log(`Releasing hold on:`, { delivery });
       try {
-        refund = await StripeService.stripe.refunds.create({
-          payment_intent: delivery.payment_intent_id,
-          amount: chargeFeeData.refund_amount,
-        });
-
-        // record the refund
-        const refund_action = await StripeActions.create({
-          action_event: STRIPE_ACTION_EVENTS.REFUND,
-          action_id: refund.id,
-          action_metadata: null,
-          target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
-          target_id: delivery.id,
-          target_metadata: null,
-          status: TRANSACTION_STATUS.COMPLETED,
-        });
-
-        console.log(`refund issued and recorded successfully`, {
-          refund_amount: chargeFeeData.refund_amount,
-          refund_id: refund.id,
-          refund_action_id: refund_action.get('id'),
-        });
-      } catch (e) {
+        const paymentIntentCancelResults = await StripeService.stripe.paymentIntents.cancel(payment_intent.id);
+      } 
+      catch (e) {
         console.log(e);
         const serviceMethodResults: ServiceMethodResults = {
           status: HttpStatusCode.INTERNAL_SERVER_ERROR,
           error: true,
           info: {
-            message: `Could not issue refund`,
+            message: `Could not release hold`,
             error: e,
           },
         };
@@ -996,14 +976,14 @@ export class DeliveriesService {
       }
     }
 
-    if (delivery.charge_id) {
+    // for legacy logic/implementation
+    else if (delivery.charge_id) {
       const charge = await StripeService.stripe.charges.retrieve(
         delivery.charge_id,
       );
       let refund: Stripe.Refund;
 
-      const was_subscribed: boolean =
-        charge.metadata['was_subscribed'] === 'true' ? true : false;
+      const was_subscribed: boolean = charge.metadata['was_subscribed'] === 'true' ? true : false;
 
       const chargeFeeData = StripeService.add_on_stripe_processing_fee(
         delivery.payout,
@@ -1051,7 +1031,7 @@ export class DeliveriesService {
       status: HttpStatusCode.OK,
       error: false,
       info: {
-        message: `Delivery Deleted!`,
+        message: `Delivery Deleted! Released hold on provided payment method.`,
         data: deletes,
       },
     };
@@ -2195,8 +2175,7 @@ export class DeliveriesService {
           },
         });
 
-        const to_phone_number =
-          delivery.carrier?.deliverme_settings?.phone || delivery.carrier?.phone;
+        const to_phone_number = delivery.carrier?.deliverme_settings?.phone || delivery.carrier?.phone;
         if (!!to_phone_number && validatePhone(to_phone_number)) {
           send_sms({
             to_phone_number,
@@ -2357,169 +2336,7 @@ export class DeliveriesService {
     return serviceMethodResults;
   }
 
-  static async create_payment_intent(options: {
-    you_id: number;
-    delivery: IDelivery;
-    host: string;
-  }) {
-    const { you_id, delivery, host } = options;
 
-    const delivery_id = delivery.id;
-    const owner_id = delivery.owner_id;
-    const carrier_id = delivery.carrier_id;
-
-    if (owner_id !== you_id) {
-      const serviceMethodResults: ServiceMethodResults = {
-        status: HttpStatusCode.BAD_REQUEST,
-        error: true,
-        info: {
-          message: `You are not the owner of this delivery.`,
-        },
-      };
-      return serviceMethodResults;
-    }
-
-    if (delivery.completed) {
-      const serviceMethodResults: ServiceMethodResults = {
-        status: HttpStatusCode.BAD_REQUEST,
-        error: true,
-        info: {
-          message: `Delivery is already completed`,
-        },
-      };
-      return serviceMethodResults;
-    }
-
-    if (
-      !delivery.owner?.stripe_account_verified ||
-      !delivery.owner?.stripe_account_id
-    ) {
-      const serviceMethodResults: ServiceMethodResults = {
-        status: HttpStatusCode.BAD_REQUEST,
-        error: true,
-        info: {
-          message: `Owner's stripe account is not setup`,
-        },
-      };
-      return serviceMethodResults;
-    }
-
-    if (
-      !delivery.carrier?.stripe_account_verified ||
-      !delivery.carrier?.stripe_account_id
-    ) {
-      const serviceMethodResults: ServiceMethodResults = {
-        status: HttpStatusCode.BAD_REQUEST,
-        error: true,
-        info: {
-          message: `Carrier's stripe account is not setup`,
-        },
-      };
-      return serviceMethodResults;
-    }
-
-    const useHost = host.endsWith('/') ? host.substr(0, host.length - 1) : host;
-    const successUrl =
-      process.env.CARRY_PAYMENT_SUCCESS_URL ||
-      `${useHost}/deliveries/${delivery_id}/payment-success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl =
-      process.env.CARRY_PAYMENT_CANCEL_URL ||
-      `${useHost}/deliveries/${delivery_id}/payment-cancel?session_id={CHECKOUT_SESSION_ID}`;
-
-    // const createPaymentOpts = {
-    //   payment_method_types: ['card'],
-    //   line_items: [
-    //     {
-    //       price_data: {
-    //         currency: 'usd',
-    //         product_data: {
-    //           name: `Delivery of ${delivery.title} by ${getUserFullName(delivery.carrier)}`,
-    //         },
-    //         unit_amount: parseFloat(delivery.payout + '00'),
-    //       },
-    //       quantity: 1,
-    //     },
-    //   ],
-    //   mode: 'payment',
-    //   success_url: successUrl,
-    //   cancel_url: cancelUrl,
-    // };
-
-    // const session = await stripe.checkout.sessions.create(createPaymentOpts);
-
-    // console.log({ createPaymentOpts }, JSON.stringify(createPaymentOpts));
-    // console.log({ session });
-
-    let paymentIntent: Stripe.PaymentIntent;
-
-    try {
-      const is_subscription_active: boolean = (
-        await UsersService.is_subscription_active(delivery.owner!)
-      ).info.data as boolean;
-      const chargeFeeData = StripeService.add_on_stripe_processing_fee(
-        delivery.payout,
-        is_subscription_active,
-      );
-      paymentIntent = await StripeService.stripe.paymentIntents.create(
-        {
-          payment_method_types: ['card'],
-          amount: chargeFeeData.final_total,
-          currency: 'usd',
-          application_fee_amount: chargeFeeData.app_fee, // free, for now
-          transfer_data: {
-            destination: delivery.carrier.stripe_account_id,
-          },
-          metadata: {
-            user_id: you_id,
-            payment_intent_event: CARRY_EVENT_TYPES.DELIVERY_COMPLETED,
-            target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
-            target_id: delivery.id,
-          },
-        },
-        // { stripeAccount: you.stripe_account_id }
-      );
-
-      const updatesobj: PlainObject = {};
-      updatesobj.payment_session_id = paymentIntent.id;
-      const updates = await update_delivery(delivery_id, updatesobj);
-    } catch (error) {
-      const serviceMethodResults: ServiceMethodResults = {
-        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
-        error: true,
-        info: {
-          message: (<any>error).message,
-          error,
-        },
-      };
-      return serviceMethodResults;
-    }
-
-    // check if delivery already has a session. if so, over-write with new one
-    // await delivery_model.update({ paymentIntent });
-
-    const newIntent = await UserPaymentIntents.create({
-      user_id: owner_id,
-      payment_intent_id: paymentIntent.id,
-      payment_intent_event: CARRY_EVENT_TYPES.DELIVERY_COMPLETED,
-      target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
-      target_id: delivery_id,
-    });
-
-    // console.log({ newIntent, paymentIntent });
-
-    const serviceMethodResults: ServiceMethodResults = {
-      status: HttpStatusCode.OK,
-      error: false,
-      info: {
-        message: `Payment intent created`,
-        data: {
-          payment_client_secret: paymentIntent.client_secret,
-          stripe_pk: process.env.STRIPE_PK,
-        },
-      },
-    };
-    return serviceMethodResults;
-  }
 
   static async payment_success(options: {
     you_id: number;
@@ -2747,7 +2564,10 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    // try charging customer for delivery listing
+    // capture the hold from the listing
+    const captureResults = await StripeService.stripe.paymentIntents.capture(delivery.payment_intent_id);
+
+    // funds now in platform; try charging customer for delivery listing
     let payment_intent: Stripe.PaymentIntent;
     const is_subscription_active: boolean = (
       await UsersService.is_subscription_active(delivery.owner!)
@@ -2988,8 +2808,9 @@ export class DeliveriesService {
   static async pay_carrier_via_transfer(options: {
     you: IUser;
     delivery: IDelivery;
+    ignoreNotification?: boolean
   }) {
-    const { you, delivery } = options;
+    const { you, delivery, ignoreNotification } = options;
 
     if (delivery.owner_id !== you.id) {
       const serviceMethodResults: ServiceMethodResults = {
@@ -3041,7 +2862,10 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    
+    // capture the hold from the listing
+    const captureResults = await StripeService.stripe.paymentIntents.capture(delivery.payment_intent_id);
+
+    // funds now in platform; try charging customer for delivery listing
     const payment_intent = await StripeService.stripe.paymentIntents.retrieve(
       delivery.payment_intent_id,
       { expand: ['charges'] },
@@ -3128,6 +2952,7 @@ export class DeliveriesService {
       await DeliveriesService.mark_delivery_as_completed({
         you_id: you.id,
         delivery,
+        ignoreNotification
       });
 
     deliveryCompletedResults.info.message &&
@@ -3149,11 +2974,12 @@ export class DeliveriesService {
   }
 
   static async carrier_self_pay(options: { you: IUser; delivery: IDelivery }) {
+    const { you, delivery } = options;
     /*
       after a certain amount of time after delivering, carrier can receive funds if the delivery owner does not dispute
     */
 
-    if (options.delivery.owner_id !== options.you.id) {
+    if (delivery.carrier_id !== options.you.id) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
         error: true,
@@ -3164,7 +2990,7 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    if (!!options.delivery.datetime_delivered) {
+    if (!delivery.datetime_delivered) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
         error: true,
@@ -3177,9 +3003,9 @@ export class DeliveriesService {
 
     // check how long it has been since delivery marked as delivered
     const momentNow = moment(new Date());
-    const momentDelivered = moment(options.delivery.datetime_delivered);
+    const momentDelivered = moment(delivery.datetime_delivered);
     const momentDiff = momentDelivered.diff(momentNow);
-    const hoursSinceDelivered = moment.duration(momentDiff).asHours();
+    const hoursSinceDelivered = Math.abs(moment.duration(momentDiff).asHours());
     const atLeast8HoursAgo = hoursSinceDelivered >= 8;
 
     if (!atLeast8HoursAgo) {
@@ -3187,14 +3013,14 @@ export class DeliveriesService {
         status: HttpStatusCode.OK,
         error: false,
         info: {
-          message: `Not 8 hours since delivering to self pay`,
+          message: `Not 24 hours since delivering to self pay`,
         },
       };
       return serviceMethodResults;
     }
 
     const dispute = await DeliveryDisputes.findOne({
-      where: { delivery_id: options.delivery.id },
+      where: { delivery_id: delivery.id },
     });
     if (!!dispute) {
       const serviceMethodResults: ServiceMethodResults = {
@@ -3208,9 +3034,47 @@ export class DeliveriesService {
     }
 
     const results = await DeliveriesService.pay_carrier_via_transfer({
-      you: options.delivery.owner!,
-      delivery: options.delivery,
+      you: delivery.owner!,
+      delivery,
+      ignoreNotification: true
     });
+
+    create_notification({
+      from_id: you.id,
+      to_id: delivery.owner_id!,
+      event: CARRY_EVENT_TYPES.CARRIER_PAYOUT_CLAIMED,
+      target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+      target_id: delivery.id,
+    }).then(async (notification_model) => {
+      const notification = await populate_carry_notification_obj(
+        notification_model,
+      );
+      ExpoPushNotificationsService.sendUserPushNotification({
+        user_id: notification.to_id,
+        message: notification.message!,
+        data: { delivery_id: delivery.id },
+      });
+      CommonSocketEventsHandler.emitEventToUserSockets({
+        user_id: delivery.carrier_id!,
+        event: CARRY_EVENT_TYPES.CARRIER_PAYOUT_CLAIMED,
+        event_data: {
+          delivery_id: delivery.id,
+          data: notification.delivery,
+          user_id: notification.to_id,
+          message: notification.message!,
+          notification,
+        },
+      });
+
+      const to_phone_number = delivery.owner?.deliverme_settings?.phone || delivery.owner?.phone;
+      if (!!to_phone_number && validatePhone(to_phone_number)) {
+        send_sms({
+          to_phone_number,
+          message: notification.message,
+        });
+      }
+    });
+
     return results;
   }
 

@@ -193,9 +193,12 @@ export class DeliveriesRequestHandler {
   }
 
   static async create_delivery(request: Request, response: Response): ExpressResponse {
+    // request body coming as multipart/form-data
+    console.log(`create delivery request body:`, request.body);
     const options = {
       you: response.locals.you as IUser,
       data: JSON.parse(request.body.payload) as any,
+      insured: !!request.body.insured,
       delivery_image: request.files && request.files['delivery_image'] || request.body?.delivery_image,
     };
     const serviceMethodResults: ServiceMethodResults = await DeliveriesService.create_delivery_and_charge(options);
@@ -341,22 +344,23 @@ export class DeliveriesRequestHandler {
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
   
-  static async create_payment_intent(request: Request, response: Response): ExpressResponse {
-    const options = {
-      you_id: response.locals.you?.id as number,
-      delivery: response.locals.delivery_model as IDelivery,
-      host: request.get('origin')! as string,
-    };
-    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.create_payment_intent(options);
-    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
-  }
 
-  static async pay_carrier(request: Request, response: Response): ExpressResponse {
+
+  static async pay_carrier_via_transfer(request: Request, response: Response): ExpressResponse {
     const options = {
       you: response.locals.you! as IUser,
       delivery: response.locals.delivery_model as IDelivery,
     };
     const serviceMethodResults: ServiceMethodResults = await DeliveriesService.pay_carrier_via_transfer(options);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async carrier_self_pay(request: Request, response: Response): ExpressResponse {
+    const options = {
+      you: response.locals.you! as IUser,
+      delivery: response.locals.delivery_model as IDelivery,
+    };
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.carrier_self_pay(options);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
 
