@@ -23,7 +23,6 @@ DelivermeApiRouter.get('/get-deliverings/:delivery_id', DelivermeApiRequestHandl
 
 DelivermeApiRouter.post('/deliveries/create-delivery', DelivermeApiRequestHandler.create_delivery);
 DelivermeApiRouter.post('/deliveries/:delivery_id/message', DeliveryExists, DelivermeApiRequestHandler.send_delivery_message);
-DelivermeApiRouter.post('/deliveries/:delivery_id/create-payment-intent', DeliveryExists, ApiIsDeliveryOwner, DelivermeApiRequestHandler.create_payment_intent);
 DelivermeApiRouter.post('/deliveries/:delivery_id/payment-success', DeliveryExists, ApiIsDeliveryOwner, DelivermeApiRequestHandler.payment_success);
 DelivermeApiRouter.post('/deliveries/:delivery_id/payment-cancel', DeliveryExists, ApiIsDeliveryOwner, DelivermeApiRequestHandler.payment_cancel);
 DelivermeApiRouter.post('/deliveries/mark-delivery-as-completed/:delivery_id', DeliveryExists, ApiIsDeliveryOwner, DelivermeApiRequestHandler.mark_delivery_as_completed);

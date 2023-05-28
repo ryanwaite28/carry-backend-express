@@ -252,15 +252,6 @@ export class DelivermeApiRequestHandler {
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
   
-  static async create_payment_intent(request: Request, response: Response): ExpressResponse {
-    const options = {
-      you_id: response.locals.api_key_model.user_id as number,
-      delivery: response.locals.delivery_model as IDelivery,
-      host: request.get('origin')! as string,
-    };
-    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.create_payment_intent(options);
-    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
-  }
 
   static async payment_success(request: Request, response: Response): ExpressResponse {
     const options = {
