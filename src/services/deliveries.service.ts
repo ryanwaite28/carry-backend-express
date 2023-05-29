@@ -3006,9 +3006,9 @@ export class DeliveriesService {
     const momentDelivered = moment(delivery.datetime_delivered);
     const momentDiff = momentDelivered.diff(momentNow);
     const hoursSinceDelivered = Math.abs(moment.duration(momentDiff).asHours());
-    const atLeast8HoursAgo = hoursSinceDelivered >= 48;
+    const minimumTimePast = hoursSinceDelivered >= 24;
 
-    if (!atLeast8HoursAgo) {
+    if (!minimumTimePast) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.OK,
         error: false,
