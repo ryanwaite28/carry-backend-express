@@ -353,6 +353,18 @@ export interface IDeliveryTrackingUpdate extends ICommonModel {
   user?: IUser,
 }
 
+export interface IDeliveryUnpaidListing {
+  id: number,
+  user_id: number,
+  delivery_id: number,
+  paid: boolean,
+  metadata: string | null,
+  canceled_payment_intent_id: string,
+  payment_intent_id: string | null,
+  date_created: string,
+  uuid: string,
+}
+
 export interface IDeliveryCarrierTrackLocationRequest extends ICommonModel {
   id: number,
   delivery_id: number,

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { IDelivery } from '../interfaces/deliverme.interface';
-import { get_delivery_by_id } from '../repos/deliveries.repo';
+import { check_delivery_unpaid_listing_is_unpaid, check_user_has_unpaid_listings, get_delivery_by_id } from '../repos/deliveries.repo';
 
 
 
@@ -152,3 +152,45 @@ export async function IsNotDeliveryCarrierLocationRequestCompleted(
   }
   return next();
 }
+
+
+export async function DeliveryIsNotUnpaid(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const delivery_id = parseInt(request.params.delivery_id, 10);
+  const unpaid_listing = await check_delivery_unpaid_listing_is_unpaid(delivery_id);
+
+  if (unpaid_listing) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Error: Delivery listing is unpaid`,
+      data: {
+        unpaid_listing
+      }
+    });
+  }
+  
+  return next();
+}
+
+
+export async function UserDoesNotHaveAnUnpaidListing(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const unpaid_listing = await check_user_has_unpaid_listings(response.locals.you.id);
+
+  if (unpaid_listing) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Error: User has unpaid listing`,
+      data: {
+        unpaid_listing
+      }
+    });
+  }
+  
+  return next();
+}
+

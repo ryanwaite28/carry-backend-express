@@ -3,7 +3,13 @@ import { get_user_by_stripe_connected_account_id, get_user_by_stripe_customer_ac
 import Stripe from 'stripe';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { UsersService } from './users.service';
-import { get_delivery_by_id, get_delivery_by_payment_intent_id } from 'src/repos/deliveries.repo';
+import { create_delivery_unpaid_listing, get_delivery_by_id, get_delivery_by_payment_intent_id, get_delivery_dispute_by_delivery_id } from 'src/repos/deliveries.repo';
+import { LOGGER } from 'src/utils/logger.utils';
+import { StripeService } from './stripe.service';
+import { sendAwsEmail } from 'src/utils/ses.aws.utils';
+import { HandlebarsEmailsService } from './emails.service';
+import { AppEnvironment } from 'src/utils/app.enviornment';
+import { ExpoPushNotificationsService } from './expo-notifications.service';
 
 
 
@@ -453,12 +459,66 @@ export class StripeWebhookEventsRequestHandler {
           - the delivery listing was deleted
         */
 
-        // check if the delivery listing is deleted; if so, the owner canceled the listing and the hold was already released upon that delete request
-        const delivery = get_delivery_by_payment_intent_id(paymentIntent.id);
+        // check if the delivery listing is deleted;
+        const delivery = await get_delivery_by_payment_intent_id(paymentIntent.id);
         if (!delivery) {
-          return;
+          // the owner must have canceled the listing and the hold was already released upon that delete request; no further actions needed
+          LOGGER.info(`payment_intent.canceled - No delivery found by payment intent: ${paymentIntent.id}; owner must have canceled listing.`);
+          break;
         }
-        // delivery not deleted/still active. check if delivery was dropped off. if so, assume service was completed
+        else {
+          /*
+            delivery not deleted/still exists. 
+            since payment intent was canceled, delivery should not be in a completed state if payout was not issued/triggered from either carrier or customer.
+          */
+          if (delivery.completed) {
+            LOGGER.error(`payment_intent.canceled - Corrupted state on delivery: cannot be completed without issuing payout, something went wrong...`, { payment_intent_id: paymentIntent.id, delivery_id: delivery.id });
+          }
+          
+          // check if there is an open dispute; if so, payout will be settled via dispute
+          const dispute = await get_delivery_dispute_by_delivery_id(delivery.id);
+          if (dispute) {
+            LOGGER.info(`payment_intent.canceled - delivery currently in a dispute:`, { dispute_id: dispute.id });
+          }
+          /*
+            check if delivery was dropped off
+          */
+          else if (!delivery.completed && !!delivery.datetime_delivered) {
+            /*
+              delivery was marked as dropped off and neither customer issued nor carrier claimed the payout.
+            */
+            LOGGER.info(`payment_intent.canceled - delivery was dropped off and no disputes; assume service was done successfully. issue an invoice`);
+            /*
+              assume service was completed normally and payout was simply forgotten about.
+              create an unpaid listing record on the customer's user account; they cannot create another listing until this one is paid
+            */
+            const unpaid_listing = await create_delivery_unpaid_listing({
+              user_id: delivery.owner_id,
+              delivery_id: delivery.id,
+              canceled_payment_intent_id: paymentIntent.id
+            });
+            LOGGER.info(`payment_intent.calceled - created unpaid delivery listing record; notifying customer`, { unpaid_listing });
+            /*
+              send out push notification and email of unpaid status
+            */
+            const user_name: string = `${delivery.owner!.firstname} ${delivery.owner!.lastname}`;
+            sendAwsEmail({
+              to: delivery.owner!.email,
+              subject: HandlebarsEmailsService.USERS.customer_unpiad_listing.subject(delivery.title),
+              html: HandlebarsEmailsService.USERS.customer_unpiad_listing.template({
+                user_name,
+                app_name: AppEnvironment.APP_NAME.DISPLAY,
+                delivery_title: delivery.title
+              })
+            });
+            ExpoPushNotificationsService.sendUserPushNotification({
+              user_id: delivery.owner_id,
+              message: `Unpaid delivery listing: ${delivery.title}. Please pay in order to continue the platform.`,
+              data: { delivery_id: delivery.id },
+            });
+          }
+        }
+
         break;
       }
       case 'payment_intent.created':

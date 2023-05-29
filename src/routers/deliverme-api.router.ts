@@ -29,5 +29,4 @@ DelivermeApiRouter.post('/deliveries/mark-delivery-as-completed/:delivery_id', D
 
 DelivermeApiRouter.put('/deliveries/:delivery_id', DeliveryExists, IsDeliveryOwner, DeliveryNotCompleted, DeliveryHasNoCarrierAssigned, DeliveriesRequestHandler.update_delivery);
 
-
 DelivermeApiRouter.delete('/deliveries/:delivery_id', DeliveryExists, ApiIsDeliveryOwner, DelivermeApiRequestHandler.delete_delivery);

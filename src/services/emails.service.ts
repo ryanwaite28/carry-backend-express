@@ -23,6 +23,8 @@ const get_html_file_as_string = (construct: string, filename: string) => {
   return content;
 }
 
+
+
 export class HandlebarsEmailsService {
 
   public static readonly USERS = {
@@ -35,8 +37,13 @@ export class HandlebarsEmailsService {
       template: compile(get_html_file_as_string('users', 'goodbye.html')),
     },
     password_reset: {
-      subject: `Password Reset`,
+      subject: `${AppEnvironment.APP_NAME.DISPLAY} - Password Reset`,
       template: compile(get_html_file_as_string('users', 'password_reset.html')),
+    },
+
+    customer_unpiad_listing: {
+      subject: (delivery_title: string) => `${AppEnvironment.APP_NAME.DISPLAY} - Unpaid delivery listing: ${delivery_title}`,
+      template: compile(get_html_file_as_string('users', 'customer_unpiad_listing.html')),
     },
   };
 

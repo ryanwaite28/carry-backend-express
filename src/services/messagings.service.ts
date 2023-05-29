@@ -71,22 +71,20 @@ export class MessagingsService {
 
     const messagings_models = await paginateTable(
       Messagings,
-      '',
-      undefined,
-      undefined,
-      [{
-        model: Users,
-        as: 'sender',
-        attributes: user_attrs_slim
-      }, {
-        model: Users,
-        as: 'user',
-        attributes: user_attrs_slim
-      }],
-      undefined,
-      undefined,
-      whereClause,
-      [['updated_at', 'DESC']]
+      {
+        user_id_field: '',
+        include: [{
+          model: Users,
+          as: 'sender',
+          attributes: user_attrs_slim
+        }, {
+          model: Users,
+          as: 'user',
+          attributes: user_attrs_slim
+        }],
+        whereClause,
+        orderBy: [['updated_at', 'DESC']]
+      }
     );
 
     const newList = [];

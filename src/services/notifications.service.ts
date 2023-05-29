@@ -7,27 +7,33 @@ import { TokensService } from './tokens.service';
 import { get_user_notification_last_opened, update_user_notification_last_opened } from '../repos/_common.repo';
 import { populate_carry_notification_obj } from '../utils/carry.chamber';
 import { ServiceMethodAsyncResults, ServiceMethodResults } from '../interfaces/common.interface';
+import { create_model_crud_repo_from_model_class } from 'src/utils/helpers.utils';
+import { IMyModel } from 'src/interfaces/carry.interface';
 
 
-
+const notification_crud = create_model_crud_repo_from_model_class<any>(Notifications);
 
 export class NotificationsService {
   
   // request handlers
 
   static async get_user_notifications(user_id: number, notification_id: number): ServiceMethodAsyncResults {
+
+
     const notifications_models = await CommonRepo.paginateTable(
       Notifications,
-      'to_id',
-      user_id,
-      notification_id
+      {
+        user_id_field: 'to_id',
+        user_id,
+        min_id: notification_id
+      }
     );
 
     const newList: any = [];
     for (const notification_model of notifications_models) {
       try {
         const app = notification_model.get('micro_app') as string;
-        const notificationObj = await populate_carry_notification_obj(notification_model);
+        const notificationObj = await populate_carry_notification_obj(notification_model as IMyModel);
         newList.push(notificationObj);
       } catch (e) {
         console.log(e, { notification: notification_model.toJSON() });
@@ -81,13 +87,12 @@ export class NotificationsService {
 
     const notifications_models = await CommonRepo.paginateTable(
       Notifications,
-      'to_id',
-      user_id,
-      notification_id,
-      undefined,
-      undefined,
-      undefined,
-      where
+      {
+        user_id_field: 'to_id',
+        user_id,
+        min_id: notification_id,
+        whereClause: where
+      }
     );
 
     console.log({ notifications_models });
@@ -96,7 +101,7 @@ export class NotificationsService {
     for (const notification_model of notifications_models) {
       try {
         const app = notification_model.get('micro_app') as string;
-        const notificationObj = await populate_carry_notification_obj(notification_model);
+        const notificationObj = await populate_carry_notification_obj(notification_model as IMyModel);
         newList.push(notificationObj);
       } catch (e) {
         console.log(e);

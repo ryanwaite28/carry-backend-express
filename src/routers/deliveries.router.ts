@@ -10,6 +10,7 @@ import {
   IsNotDeliveryCarrierLocationRequestCompleted,
   DeliveryHasNoCarrierAssigned,
   IsDeliveryOwnerOrCarrier,
+  UserDoesNotHaveAnUnpaidListing,
 } from '../guards/delivery.guard';
 import {
   DeliveryDisputeExists,
@@ -45,7 +46,7 @@ DeliveriesRouter.get('/:delivery_id', DeliveryExists, DeliveriesRequestHandler.g
 
 /** POST */
 
-DeliveriesRouter.post('/', YouAuthorizedSlim, DeliveriesRequestHandler.create_delivery);
+DeliveriesRouter.post('/', YouAuthorizedSlim, UserDoesNotHaveAnUnpaidListing, DeliveriesRequestHandler.create_delivery);
 DeliveriesRouter.post('/find-available', YouAuthorizedSlim, DeliveriesRequestHandler.find_available_delivery);
 DeliveriesRouter.post('/search', YouAuthorizedSlimWeak, DeliveriesRequestHandler.search_deliveries);
 DeliveriesRouter.post('/browse-recent', YouAuthorizedSlimWeak, DeliveriesRequestHandler.browse_recent_deliveries);

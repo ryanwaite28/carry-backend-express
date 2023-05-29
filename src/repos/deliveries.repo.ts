@@ -7,14 +7,27 @@ import {
   Model,
   FindAttributeOptions,
   GroupOption,
-  Order
-} from 'sequelize';
-import { STATUSES } from '../enums/common.enum';
-import { PlainObject } from '../interfaces/common.interface';
-import { delete_cloudinary_image } from '../utils/cloudinary-manager.utils';
-import { DeliveryDisputeSettlementOfferStatus } from '../enums/carry.enum';
-import { IMyModel } from '../interfaces/carry.interface';
-import { ICreateDeliveryProps, ICreateDeliveryTrackingUpdateProps, ICarryUserRating, IDelivery, IDeliveryDispute, IDeliveryDisputeCustomerSupportMessage, IDeliveryDisputeLog, IDeliveryDisputeSettlementInvoice, IDeliveryDisputeSettlementOffer, IDeliveryMessage, IDeliveryTrackingUpdate } from '../interfaces/deliverme.interface';
+  Order,
+} from "sequelize";
+import { STATUSES } from "../enums/common.enum";
+import { PlainObject } from "../interfaces/common.interface";
+import { delete_cloudinary_image } from "../utils/cloudinary-manager.utils";
+import { DeliveryDisputeSettlementOfferStatus } from "../enums/carry.enum";
+import { IMyModel } from "../interfaces/carry.interface";
+import {
+  ICreateDeliveryProps,
+  ICreateDeliveryTrackingUpdateProps,
+  ICarryUserRating,
+  IDelivery,
+  IDeliveryDispute,
+  IDeliveryDisputeCustomerSupportMessage,
+  IDeliveryDisputeLog,
+  IDeliveryDisputeSettlementInvoice,
+  IDeliveryDisputeSettlementOffer,
+  IDeliveryMessage,
+  IDeliveryTrackingUpdate,
+  IDeliveryUnpaidListing,
+} from "../interfaces/deliverme.interface";
 import {
   DeliveryTrackingUpdates,
   Users,
@@ -30,15 +43,25 @@ import {
   DeliveryDisputeCustomerSupportMessages,
   CarryUserProfileSettings,
   CarryUserRatings,
-  DeliveryInsurances
-} from '../models/delivery.model';
-import { delivery_search_attrs } from '../utils/carry.chamber';
-import { user_attrs_slim } from '../utils/constants.utils';
-import { convertModelCurry, convertModelsCurry, convertModels, convertModel } from '../utils/helpers.utils';
-import { getAll, paginateTable } from './_common.repo';
+  DeliveryInsurances,
+  DeliveryUnpaidListings,
+} from "../models/delivery.model";
+import { delivery_search_attrs } from "../utils/carry.chamber";
+import { user_attrs_slim } from "../utils/constants.utils";
+import {
+  convertModelCurry,
+  convertModelsCurry,
+  convertModels,
+  convertModel,
+  create_model_crud_repo_from_model_class,
+} from "../utils/helpers.utils";
+import { getAll, paginateTable } from "./_common.repo";
 
 
 
+
+const delivery_crud = create_model_crud_repo_from_model_class<IDelivery>(Delivery);
+const delivery_unpaid_listings_crud = create_model_crud_repo_from_model_class<IDeliveryUnpaidListing>(DeliveryUnpaidListings);
 
 
 
@@ -171,6 +194,17 @@ export const deliveryDisputeMasterIncludes: Includeable[] = [
   //   ]
   // },
   {
+    model: DeliveryUnpaidListings,
+    as: 'delivery_unpaid_listing',
+    include: [
+      {
+        model: Users,
+        as: `customer`,
+        attributes: user_attrs_slim,
+      }
+    ]
+  },
+  {
     model: DeliveryDisputeSettlementOffers,
     as: `delivery_dispute_settlement_offers`,
     include: [
@@ -283,30 +317,27 @@ export async function reset_delivery(delivery: IDelivery) {
 
 
 export function get_delivery_by_id(id: number) {
-  return Delivery.findOne({
+  return delivery_crud.findOne({
     where: { id },
     include: deliveryMasterIncludes,
     // order: deliveryTrackingOrderBy,
-  })
-  .then(convertDeliveryModel);
+  });
 }
 
 export function get_delivery_by_payment_intent_id(payment_intent_id: string, slim: boolean = false) {
-  return Delivery.findOne({
+  return delivery_crud.findOne({
     where: { payment_intent_id },
     include: slim ? [] : deliveryMasterIncludes,
     // order: deliveryTrackingOrderBy,
-  })
-  .then(convertDeliveryModel);
+  });
 }
 
 export function get_delivery_slim_by_id(id: number) {
-  return Delivery.findOne({
+  return delivery_crud.findOne({
     where: { id },
     include: deliveryGeneralIncludes,
     // order: deliveryTrackingOrderBy,
-  })
-  .then(convertDeliveryModel);
+  });
 }
 
 export function create_delivery(
@@ -350,7 +381,7 @@ export function find_available_delivery_by_from_city_and_state(
   city: string, 
   state: string
 ) {
-  return Delivery.findOne({
+  return delivery_crud.findOne({
     where: {
       carrier_id: null,
       completed: false,
@@ -359,15 +390,14 @@ export function find_available_delivery_by_from_city_and_state(
     },
     order: [fn('RANDOM')],
     include: deliveryMasterIncludes,
-  })
-  .then(convertDeliveryModel);
+  });
 }
 
 export function find_available_delivery_by_to_city_and_state(
   city: string, 
   state: string
 ) {
-  return Delivery.findOne({
+  return delivery_crud.findOne({
     where: {
       carrier_id: null,
       completed: false,
@@ -376,8 +406,7 @@ export function find_available_delivery_by_to_city_and_state(
     },
     order: [fn('RANDOM')],
     include: deliveryMasterIncludes
-  })
-  .then(convertDeliveryModel);
+  });
 }
 
 export async function find_available_delivery(params: {
@@ -402,12 +431,11 @@ export async function find_available_delivery(params: {
     }
   }
 
-  const delivery = await Delivery.findOne({
+  const delivery = await delivery_crud.findOne({
     where: useWhere,
     order: [fn('RANDOM')],
     include: deliveryMasterIncludes
-  })
-  .then(convertDeliveryModel);
+  });
 
   return delivery;
 }
@@ -520,7 +548,7 @@ export function browse_recent_deliveries(
     limit: 10,
   };
 
-  return Delivery.findAll(findQuery).then(convertDeliveryModels);
+  return delivery_crud.findAll(findQuery);
 }
 
 export function browse_featured_deliveries(
@@ -545,7 +573,7 @@ export function browse_featured_deliveries(
     limit: 10,
   };
 
-  return Delivery.findAll(findQuery).then(convertDeliveryModels);
+  return delivery_crud.findAll(findQuery);
 }
 
 export function browse_map_deliveries(params: {
@@ -775,18 +803,13 @@ export function get_user_deliveries_all(user_id: number) {
 }
 
 export async function get_user_deliveries(user_id: number, delivery_id?: number) {
-  return paginateTable(
-    Delivery,
-    "owner_id",
+  return delivery_crud.paginate({
+    user_id_field: 'owner_id',
     user_id,
-    delivery_id,
-    deliveryMasterIncludes,
-    undefined,
-    undefined,
-    undefined,
-    deliveryOrderBy
-  )
-  .then(convertDeliveryModels);
+    min_id: delivery_id,
+    include: deliveryMasterIncludes,
+    orderBy: deliveryOrderBy
+  });
 }
 
 export async function get_user_deliverings_all(user_id: number) {
@@ -804,18 +827,14 @@ export async function get_user_deliverings_all(user_id: number) {
 }
 
 export async function get_user_deliverings(user_id: number, delivery_id?: number) {
-  return paginateTable(
-    Delivery,
-    "carrier_id",
+  return delivery_crud.paginate({
+    user_id_field: 'carrier_id',
     user_id,
-    delivery_id,
-    deliveryMasterIncludes,
-    undefined,
-    undefined,
-    { completed: true },
-    deliveryOrderBy
-  )
-  .then(convertDeliveryModels);
+    min_id: delivery_id,
+    include: deliveryMasterIncludes,
+    whereClause: { completed: true },
+    orderBy: deliveryOrderBy
+  });
 }
 
 export async function get_user_deliveries_all_slim(user_id: number) {
@@ -833,18 +852,13 @@ export async function get_user_deliveries_all_slim(user_id: number) {
 }
 
 export async function get_user_deliveries_slim(user_id: number, delivery_id?: number) {
-  return paginateTable(
-    Delivery,
-    "owner_id",
+  return delivery_crud.paginate({
+    user_id_field: 'owner_id',
     user_id,
-    delivery_id,
-    deliveryGeneralIncludes,
-    undefined,
-    undefined,
-    undefined,
-    deliveryOrderBy
-  )
-  .then(convertDeliveryModels);
+    min_id: delivery_id,
+    include: deliveryGeneralIncludes,
+    orderBy: deliveryOrderBy
+  });
 }
 
 export async function get_user_deliverings_all_slim(user_id: number) {
@@ -864,18 +878,14 @@ export async function get_user_deliverings_slim(
   user_id: number,
   delivery_id?: number
 ) {
-  return paginateTable(
-    Delivery,
-    "carrier_id",
+  return delivery_crud.paginate({
+    user_id_field: 'carrier_id',
     user_id,
-    delivery_id,
-    deliveryGeneralIncludes,
-    undefined,
-    undefined,
-    { completed: true },
-    deliveryOrderBy
-  )
-  .then(convertDeliveryModels);
+    min_id: delivery_id,
+    include: deliveryGeneralIncludes,
+    whereClause: { completed: true },
+    orderBy: deliveryOrderBy
+  });
 }
 
 export async function get_user_delivering(you_id: number) {
@@ -1163,4 +1173,22 @@ export function update_delivery_dispute_settlement_invoice(invoice_id: number, u
         return model?.toJSON() as IDeliveryDisputeSettlementInvoice;
       });
     })
+}
+
+
+export function create_delivery_unpaid_listing(params: {
+  user_id: number,
+  delivery_id: number,
+  metadata?: string | null,
+  canceled_payment_intent_id: string,
+}) {
+  return delivery_unpaid_listings_crud.create(params);
+}
+
+export function check_delivery_unpaid_listing_is_unpaid(delivery_id: number) {
+  return delivery_unpaid_listings_crud.findOne({ where: { delivery_id, paid: false } });
+}
+
+export function check_user_has_unpaid_listings(user_id: number) {
+  return delivery_unpaid_listings_crud.findOne({ where: { user_id, paid: false } });
 }

@@ -242,6 +242,18 @@ export const UserRefunds = <MyModelStatic> sequelize.define('carry_user_refunds'
   uuid:                                { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
 
+export const UserInvoices = <MyModelStatic> sequelize.define('carry_user_invoices', {
+  id:                                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:                             { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  invoice_id:                          { type: Sequelize.STRING, allowNull: false },
+  invoice_details:                     { type: Sequelize.STRING, allowNull: false },
+  target_type:                         { type: Sequelize.STRING, allowNull: true, defaultValue: '' },
+  target_id:                           { type: Sequelize.INTEGER, allowNull: true, defaultValue: 0 },
+  status:                              { type: Sequelize.STRING, allowNull: false, defaultValue: '' },
+  date_created:                        { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:                                { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
 
 export const Messagings = <MyModelStatic> sequelize.define('carry_messagings', {
   id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -599,6 +611,20 @@ export const DeliveryTrackingUpdates = <MyModelStatic> sequelize.define('carry_d
   uuid:              { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
 
+export const DeliveryUnpaidListings = <MyModelStatic> sequelize.define('carry_delivery_unpaid_listings', {
+  id:                                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:                             { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  delivery_id:                         { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
+  paid:                                { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+  metadata:                            { type: Sequelize.TEXT, allowNull: true, defaultValue: null },
+  canceled_payment_intent_id:          { type: Sequelize.STRING, allowNull: false },
+  payment_intent_id:                   { type: Sequelize.STRING, allowNull: true, defaultValue: null },
+  date_created:                        { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:                                { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+DeliveryUnpaidListings.sync({ force: true });
+
 
 export const CarryUserProfileSettings = <MyModelStatic> sequelize.define('carry_user_profile_settings', {
   id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -724,6 +750,11 @@ DeliveryCarrierTrackLocationUpdates.belongsTo(Delivery, { as: 'delivery', foreig
 
 Delivery.hasOne(DeliveryDisputes, { as: 'delivery_dispute', foreignKey: 'delivery_id', sourceKey: 'id' });
 DeliveryDisputes.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
+
+Users.hasMany(DeliveryUnpaidListings, { as: 'unpaid_listings', foreignKey: 'user_id', sourceKey: 'id' });
+DeliveryUnpaidListings.belongsTo(Users, { as: 'customer', foreignKey: 'user_id', targetKey: 'id' });
+Delivery.hasOne(DeliveryUnpaidListings, { as: 'delivery_unpaid_listing', foreignKey: 'delivery_id', sourceKey: 'id' });
+DeliveryUnpaidListings.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
 
 DeliveryDisputes.hasMany(DeliveryDisputeLogs, { as: 'delivery_dispute_logs', foreignKey: 'dispute_id', sourceKey: 'id' });
 DeliveryDisputeLogs.belongsTo(DeliveryDisputes, { as: 'dispute', foreignKey: 'dispute_id', targetKey: 'id' });

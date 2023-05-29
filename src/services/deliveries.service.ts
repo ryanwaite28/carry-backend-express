@@ -698,7 +698,7 @@ export class DeliveriesService {
           currency: 'usd',
           customer: you.stripe_customer_account_id,
           payment_method: data.payment_method_id,
-          capture_method: 'manual', // place hold
+          capture_method: 'manual', // place hold for now, will collect when listing is fulfilled
           off_session: true,
           confirm: true,
           receipt_email: you.email
