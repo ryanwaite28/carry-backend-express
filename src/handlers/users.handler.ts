@@ -287,17 +287,15 @@ export class UsersRequestHandler {
 
   
   static async submit_reset_password_request(request: Request, response: Response): ExpressResponse {
-    const email: string = request.params.email;
-    const request_origin: string = request.get('origin')!;
-    const serviceMethodResults: ServiceMethodResults = await UsersService.submit_reset_password_request(email, request_origin);
+    const email: string = request.body.email;
+    const serviceMethodResults: ServiceMethodResults = await UsersService.submit_reset_password_request(email);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
   
   
   static async submit_password_reset_code(request: Request, response: Response): ExpressResponse {
     const code = request.params.code;
-    const request_origin: string = request.get('origin')!;
-    const serviceMethodResults: ServiceMethodResults = await UsersService.submit_password_reset_code(code, request_origin);
+    const serviceMethodResults: ServiceMethodResults = await UsersService.submit_password_reset_code(code);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
 

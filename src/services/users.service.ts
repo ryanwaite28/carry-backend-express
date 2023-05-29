@@ -29,6 +29,7 @@ import { CARRY_EVENT_TYPES } from 'src/enums/carry.enum';
 import { AppEnvironment } from 'src/utils/app.enviornment';
 import { HandlebarsEmailsService } from './emails.service';
 import { sendAwsEmail } from 'src/utils/ses.aws.utils';
+import { LOGGER } from 'src/utils/logger.utils';
 
 
 
@@ -1067,7 +1068,7 @@ export class UsersService {
     }
   }
 
-  static async submit_reset_password_request(email: string, request_origin: string): ServiceMethodAsyncResults {
+  static async submit_reset_password_request(email: string): ServiceMethodAsyncResults {
     if (!validateEmail(email)) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
@@ -1092,76 +1093,58 @@ export class UsersService {
     }
 
     const user = user_result!;
-    const name = getUserFullName(user);
+    const user_name = getUserFullName(user);
 
-    const email_subject = `${process.env.APP_NAME} - Password reset requested`;
-    const link = request_origin.endsWith('/')
-      ? (request_origin + 'modern/password-reset') 
-      : (request_origin + '/modern/password-reset');
-
-    let password_request_result = await ResetPasswordRequests.findOne({
-      where: {
-        user_id: user.id,
-        completed: false,
-      } 
-    });
-
+    const email_subject = `${AppEnvironment.APP_NAME.DISPLAY} - Password reset requested`;
+    
+    // check if there is an active password reset request
+    const password_request_result = await UserRepo.check_user_active_password_reset(user.id);
     if (password_request_result) {
-      const unique_value = password_request_result.get('unique_value');      
-      const email_data = {
-        link,
-        unique_value,
-        name,
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.BAD_REQUEST,
+        error: true,
+        info: {
+          message: 'An active password reset has already been requested for this email.',
+        }
       };
-      console.log(`email_data`, email_data);
-      let email_html = PasswordReset_EMAIL(email_data);
-      const email_result = await send_email({
+      return serviceMethodResults;
+    }
+    
+    // send reset request email
+    try {
+      const new_reset_request = await UserRepo.create_user_active_password_reset(user.id);
+      const reset_password_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-password-reset?verification_code=${new_reset_request.uuid}`;
+      sendAwsEmail({
         to: user.email,
-        name: name,
-        subject: email_subject,
-        html: email_html
+        subject: HandlebarsEmailsService.USERS.password_reset.subject,
+        html: HandlebarsEmailsService.USERS.password_reset.template({
+          user_name,
+          reset_password_url
+        })
       });
-      console.log(`email_result`, email_result);
 
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.OK,
         error: false,
         info: {
-          message: 'A password reset has already been requested for this email. A copy has been sent.',
+          message: 'A password reset request has been sent to the provided email.',
         }
       };
       return serviceMethodResults;
     }
-
-    // send reset request email
-    const new_reset_request = await ResetPasswordRequests.create({ user_id: user.id });
-    const unique_value = new_reset_request.get('unique_value');
-    const email_data = {
-      link,
-      unique_value,
-      name,
-    };
-    console.log(`email_data`, email_data);
-    let email_html = PasswordReset_EMAIL(email_data);
-    const email_result = await send_email({
-      to: user.email,
-      name: name,
-      subject: email_subject,
-      html: email_html
-    });
-    console.log(`email_result`, email_result);
-
-    const serviceMethodResults: ServiceMethodResults = {
-      status: HttpStatusCode.OK,
-      error: false,
-      info: {
-        message: 'A password reset request has been sent to the provided email!',
-      }
-    };
-    return serviceMethodResults;
+    catch (e) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+        error: true,
+        info: {
+          message: `Could not create password reset; something went wrong. If problem persists, please contact site owner.`
+        }
+      };
+      return serviceMethodResults;
+    }
   }
 
-  static async submit_password_reset_code(code: string, request_origin: string): ServiceMethodAsyncResults {
+  static async submit_password_reset_code(code: string): ServiceMethodAsyncResults {
     if(!code) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
@@ -1173,7 +1156,7 @@ export class UsersService {
       return serviceMethodResults;
     }
 
-    const request_result = await ResetPasswordRequests.findOne({ where: { unique_value: code } });
+    const request_result = await UserRepo.get_password_reset_request_by_code(code);
     if (!request_result) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.NOT_FOUND,
@@ -1184,7 +1167,7 @@ export class UsersService {
       };
       return serviceMethodResults;
     }
-    if (request_result.get('completed')) {
+    if (request_result.completed) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
         error: true,
@@ -1195,8 +1178,8 @@ export class UsersService {
       return serviceMethodResults;
     }
 
-    const user_result = await UserRepo.get_user_by_id(request_result.get(`user_id`));
-    if (!user_result) {
+    const user: IUser = await UserRepo.get_user_by_id(request_result.user_id);
+    if (!user) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
         error: true,
@@ -1207,49 +1190,46 @@ export class UsersService {
       return serviceMethodResults;
     }
 
-    const name = getUserFullName(user_result);
+    const user_name = getUserFullName(user);
     const password = uniqueValue();
     const hash = bcrypt.hashSync(password);
-    console.log({
-      name,
-      password,
-      hash,
-    });
+    const update_result = await UserRepo.update_user({ password: hash }, { id: user.id });
 
-    const update_result = await UserRepo.update_user({ password: hash }, { id: user_result.id });
-    console.log({
-      update_result
-    });
+    // send reset request email
+    try {
+      await sendAwsEmail({
+        to: user.email,
+        subject: HandlebarsEmailsService.USERS.password_reset_success.subject,
+        html: HandlebarsEmailsService.USERS.password_reset_success.template({
+          user_name,
+          temp_password: password
+        })
+      });
+      LOGGER.info(`Submit password reset success email sent`);
+      
+      await UserRepo.mark_password_reset_request_completed(request_result.id);
+      LOGGER.info(`Submit password reset marked as completed`);
 
-    const request_updates = await request_result.update({ completed: true }, { fields: [`completed`] });
-
-    // send new password email
-    const link = request_origin.endsWith('/')
-      ? (request_origin + 'modern/signin') 
-      : (request_origin + '/modern/signin');
-    const email_subject = `${process.env.APP_NAME} - Password reset successful!`;
-    const email_html = PasswordResetSuccess_EMAIL({
-      name: getUserFullName(user_result),
-      password,
-      link 
-    });
-
-    const email_result = await send_email({
-      to: user_result.email,
-      name: name,
-      subject: email_subject,
-      html: email_html
-    });
-    console.log(`email_result`, email_result);
-
-    const serviceMethodResults: ServiceMethodResults = {
-      status: HttpStatusCode.OK,
-      error: false,
-      info: {
-        message: 'The Password has been reset! Check your email.'
-      }
-    };
-    return serviceMethodResults;
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.OK,
+        error: false,
+        info: {
+          message: 'A temporary password has been sent.',
+        }
+      };
+      return serviceMethodResults;
+    }
+    catch (e) {
+      LOGGER.info(`Submit password reset failed`, { error: e });
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+        error: true,
+        info: {
+          message: `Could not complete password reset; something went wrong. If problem persists, please contact site owner.`
+        }
+      };
+      return serviceMethodResults;
+    }
   }
 
   static async verify_email(verification_code: string): ServiceMethodAsyncResults {

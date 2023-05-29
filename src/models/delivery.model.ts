@@ -314,7 +314,6 @@ export const ResetPasswordRequests = <MyModelStatic> sequelize.define('carry_res
   id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
   user_id:             { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
   completed:           { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
-  unique_value:        { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV4 },
   uuid:                { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 },
   date_created:        { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
 }, common_options);

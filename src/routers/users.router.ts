@@ -53,7 +53,7 @@ UsersRouter.get('/:id', UsersRequestHandler.get_user_by_id);
 
 // POST
 UsersRouter.post('/', UsersRequestHandler.sign_up);
-UsersRouter.post('/:email/password-reset', UsersRequestHandler.submit_reset_password_request);
+UsersRouter.post('/password-reset', UsersRequestHandler.submit_reset_password_request);
 UsersRouter.post('/:you_id/feedback', YouAuthorized, UsersRequestHandler.send_feedback);
 UsersRouter.post('/:you_id/notifications/update-last-opened', YouAuthorized, NotificationsRequestHandler.update_user_last_opened);
 UsersRouter.post('/:you_id/notifications/app/:micro_app/update-app-notifications-last-opened', YouAuthorized, NotificationsRequestHandler.update_user_app_notification_last_opened);

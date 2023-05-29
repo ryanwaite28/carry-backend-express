@@ -3,13 +3,16 @@ import {
   Op,
   WhereOptions
 } from 'sequelize';
-import { IUser, IUserExpoDevice, IMyModel, IApiKey } from '../interfaces/carry.interface';
+import { IUser, IUserExpoDevice, IMyModel, IApiKey, IResetPasswordRequest } from '../interfaces/carry.interface';
 import { PlainObject } from '../interfaces/common.interface';
-import { Users, UserExpoDevices, ApiKeys } from '../models/delivery.model';
+import { Users, ResetPasswordRequests, UserExpoDevices, ApiKeys } from '../models/delivery.model';
 import { user_attrs_slim } from '../utils/constants.utils';
-import { convertModelCurry, convertModelsCurry, convertModel } from '../utils/helpers.utils';
+import { convertModelCurry, convertModelsCurry, convertModel, create_model_crud_repo_from_model_class } from '../utils/helpers.utils';
 
 
+
+
+const user_password_reset_request_crud = create_model_crud_repo_from_model_class<IResetPasswordRequest>(ResetPasswordRequests);
 
 
 const convertUserModel = convertModelCurry<IUser>();
@@ -367,4 +370,25 @@ export function remove_expo_device_and_push_token(user_id: number, token: string
       token,
     }
   });
+}
+
+export function check_user_active_password_reset(user_id: number) {
+  return user_password_reset_request_crud.findOne({
+    where: {
+      user_id,
+      completed: false,
+    } 
+  });
+}
+
+export function create_user_active_password_reset(user_id: number) {
+  return user_password_reset_request_crud.create({ user_id });
+}
+
+export function get_password_reset_request_by_code(uuid: string) {
+  return user_password_reset_request_crud.findOne({ where: { uuid } });
+}
+
+export function mark_password_reset_request_completed(id: number) {
+  return user_password_reset_request_crud.updateById(id, { completed: true });
 }

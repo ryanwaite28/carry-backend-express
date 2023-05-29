@@ -16,7 +16,7 @@ const get_html_file_as_string = (construct: string, filename: string) => {
 
     console.log(`html_file_path:`, { html_file_path, fileExists });
     if (!fileExists) {
-      console.log(`File does not exist, trying parent directory...`);
+      console.log(`File does not exist...`);
     }
   }
   const content = readFileSync(html_file_path, 'utf8').toString();
@@ -39,6 +39,10 @@ export class HandlebarsEmailsService {
     password_reset: {
       subject: `${AppEnvironment.APP_NAME.DISPLAY} - Password Reset`,
       template: compile(get_html_file_as_string('users', 'password_reset.html')),
+    },
+    password_reset_success: {
+      subject: `${AppEnvironment.APP_NAME.DISPLAY} - Password Reset Successful`,
+      template: compile(get_html_file_as_string('users', 'password_reset_success.html')),
     },
 
     customer_unpiad_listing: {

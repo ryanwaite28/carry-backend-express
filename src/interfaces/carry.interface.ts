@@ -40,7 +40,7 @@ export interface IUserSubscriptionInfo {
   current_period_end: number,
 }
 
-export interface ICommonModel extends PlainObject {
+export interface ICommonModel {
   id:                      number,
   date_created:            string,
   uuid:                    string,
@@ -139,7 +139,6 @@ export interface IUsersPhoneVerification extends ICommonModel {
 export interface IResetPasswordRequest extends ICommonModel {
   user_id:             number,
   completed:           boolean,
-  unique_value:        string,
 }
 
 export interface IAccountReported extends ICommonModel {
@@ -156,11 +155,6 @@ export interface ISiteFeedback extends ICommonModel {
   summary:             string,
 }
 
-export interface IResetPasswordRequest extends ICommonModel {
-  user_id:                 number,
-  completed:               boolean,
-  unique_value:            string,
-}
 
 export interface INotification extends ICommonModel {
   from_id:                 number,
