@@ -110,8 +110,8 @@ export class AwsS3Service {
   
       LOGGER.info(`AWS S3 upload results:`, { results });
       const serviceMethodResults: ServiceMethodResults = {
-        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
-        error: true,
+        status: HttpStatusCode.OK,
+        error: false,
         info: {
           data: results
         }
