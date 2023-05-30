@@ -8,6 +8,13 @@ import {
   HeadBucketCommand
 } from "@aws-sdk/client-s3";
 import { AppEnvironment } from "./app.enviornment";
+import { UploadedFile } from "express-fileupload";
+import { readFileSync } from "fs";
+import { upload_base64, upload_file } from "./cloudinary-manager.utils";
+import { LOGGER } from "./logger.utils";
+import { PlainObject, ServiceMethodResults } from "src/interfaces/common.interface";
+import { HttpStatusCode } from "src/enums/http-codes.enum";
+import { isImageFileOrBase64 } from "./helpers.utils";
 
 
 
@@ -21,7 +28,109 @@ const s3Client = new S3Client({ region: REGION });
 export class AwsS3Service {
   static readonly s3Client = s3Client;
 
-  static readonly Bucket = AppEnvironment.AWS.S3;
+  static readonly Bucket = AppEnvironment.AWS.S3.BUCKET;
+
+  static async uploadFile(
+    file: string | UploadedFile | undefined,
+    options?: {
+      treatNotFoundAsError: boolean,
+      validateAsImage?: boolean,
+      mutateObj?: PlainObject,
+      id_prop?: string,
+      link_prop?: string;
+    }
+  ) {
+    if (!file) {
+      LOGGER.error(`AwsS3Service.uploadFile - error: invalid file input...`);
+      
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.BAD_REQUEST,
+        error: options && options.hasOwnProperty('treatNotFoundAsError') ? options.treatNotFoundAsError : true,
+        info: {
+          message: `No argument found/given`
+        }
+      };
+      return serviceMethodResults;
+    }
+
+    if (!!options.validateAsImage && !isImageFileOrBase64(file)) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.BAD_REQUEST,
+        error: true,
+        info: {
+          message: `Bad file input given.`
+        }
+      };
+      return serviceMethodResults;
+    }
+
+    
+    try {
+      let filepath: string = '';
+      let filetype: string = '';
+      let filename: string = '';
+      if (typeof file === 'string') {
+        // base64 string provided; attempt parsing...
+        const filedata = await upload_base64(file);
+        filepath = filedata.file_path;
+        filetype = filedata.filetype;
+        filename = filedata.filename;
+      }
+      else {
+        const filedata = await upload_file(file);
+        filetype = (<UploadedFile> file).mimetype;
+        filepath = filedata.file_path;
+        filename = filedata.filename;
+      }
+  
+      const Key = `static/uploads/${filename}`;
+      const Id = `${AppEnvironment.AWS.S3.BUCKET}|${Key}`;
+      const Link = `${AppEnvironment.AWS.S3.SERVE_ORIGIN}/uploads/${filename}`;
+  
+      const Body: Buffer = readFileSync(filepath);
+      await AwsS3Service.createObject({
+        Bucket: AppEnvironment.AWS.S3.BUCKET,
+        Key,
+        Body,
+        ContentType: filetype
+      });
+  
+      const results = {
+        Bucket: AppEnvironment.AWS.S3.BUCKET,
+        Key,
+        ContentType: filetype,
+        Link,
+        Id
+      };
+
+      if (options && options.mutateObj && options.id_prop && options.link_prop) {
+        options.mutateObj[options.id_prop] = Id;
+        options.mutateObj[options.link_prop] = Link;
+      }
+  
+      LOGGER.info(`AWS S3 upload results:`, { results });
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+        error: true,
+        info: {
+          data: results
+        }
+      };
+      LOGGER.info(`AWS S3 upload results:`, { results });
+      return serviceMethodResults;
+    }
+    catch (error) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+        error: true,
+        info: {
+          message: `Could not upload to AWS S3; something went wrong`
+        }
+      };
+      LOGGER.error(serviceMethodResults.info.message, { error });
+      return serviceMethodResults;
+    }
+  }
 
   // create
 
@@ -36,6 +145,7 @@ export class AwsS3Service {
     Bucket: string, // The name of the bucket. For example, 'sample_bucket_101'.
     Key: string, // The name of the object. For example, 'sample_upload.txt'.
     Body: any, // The content of the object. For example, 'Hello world!".
+    ContentType: string
   }) {
     const results = await s3Client.send(new PutObjectCommand(params));
     console.log(

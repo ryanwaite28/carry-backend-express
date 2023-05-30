@@ -1,3 +1,4 @@
+import { UploadedFile } from "express-fileupload";
 import { uniqueValue } from "./helpers.utils";
 
 const cloudinary = require('cloudinary').v2;
@@ -8,69 +9,72 @@ const fs = require('fs');
 export interface IUploadFile {
   error: boolean;
   filename?: string;
-  image_path?: string;
+  file_path?: string;
   message?: string;
+  filetype: string;
 }
 
-export function upload_file(file: any): Promise<IUploadFile> {
+export function upload_file(file: UploadedFile): Promise<IUploadFile> {
   return new Promise((resolve, reject) => {
     if (!file) {
-      return reject({error: true, filename: undefined, image_path: undefined, message: 'no file given...'});
+      return reject({error: true, filename: undefined, file_path: undefined, message: 'no file given...'});
     }
     const unique_filename = uniqueValue();
     const filename = unique_filename + (<string> file.name);
-    const image_path = __dirname + '/' + filename;
-    file.mv(filename, (error: any) => {
+    const file_path = __dirname + '/' + filename;
+    const filetype = file.mimetype;
+    file.mv(file_path, (error: any) => {
       if (error) {
-        return reject({error: true, filename: undefined, image_path: undefined, message: 'could not upload file...'});
+        return reject({error: true, filename: undefined, filetype, file_path: undefined, message: 'could not upload file...'});
       } else {
-        return resolve({ error: false, filename, image_path, message: undefined });
+        return resolve({ error: false, filename, file_path, filetype: undefined, message: undefined });
       }
     });
   });
 }
 
 export const base64Regex = /^data:([A-Za-z-+\/]+);base64,(.+)$/;
-export function decodeBase64Image(dataString: string) {
+
+export function decodeBase64(dataString: string) {
   let matches = dataString.match(base64Regex);
-  let response: { image_type: string, image_data: Buffer } = {
-    image_data: Buffer.from(''),
-    image_type: '',
+  let response: { file_type: string, file_data: Buffer } = {
+    file_data: Buffer.from(''),
+    file_type: '',
   };
 
   if (!matches || matches.length !== 3) {
     throw new Error('Invalid base64 input string');
   }
 
-  response.image_type = matches[1];
-  response.image_data = Buffer.from(matches[2], 'base64');
+  response.file_type = matches[1];
+  response.file_data = Buffer.from(matches[2], 'base64');
 
-  if (!response.image_type || !response.image_data) {
+  if (!response.file_type || !response.file_data) {
     throw new Error(`Could not parse base64 string`);
   }
 
   return response;
 }
 
-export function upload_base64(base64_image: string): Promise<IUploadFile> {
+export function upload_base64(base64: string): Promise<IUploadFile> {
   return new Promise((resolve, reject) => {
     try {
-      if (!base64_image) {
-        return reject({error: true, filename: undefined, image_path: undefined, message: 'no base64_image given...'});
+      if (!base64) {
+        return reject({error: true, filename: undefined, file_path: undefined, message: 'no base64 input given...'});
       }
   
-      const imageBuffer = decodeBase64Image(base64_image);
-      const filetype = imageBuffer.image_type.split(`/`)[1];
-      const filename = `${Date.now()}.${filetype}`;
-      const image_path = __dirname + '/' + filename;
-      console.log(`upload_base64:`, { filename, filetype, image_path });
-      const writeOp = fs.writeFileSync(image_path, imageBuffer.image_data);
+      const fileBuffer = decodeBase64(base64);
+      const filetype = fileBuffer.file_type;
+      const filename = `${Date.now()}.${filetype.split('/')[1]}`;
+      const file_path = __dirname + '/' + filename;
+      console.log(`upload_base64:`, { filename, filetype, file_path });
+      const writeOp = fs.writeFileSync(file_path, fileBuffer.file_data);
       console.log(`successfully uploaded base64`);
-      return resolve({ error: false, filename, image_path, message: undefined });
+      return resolve({ error: false, filename, file_path, filetype, message: undefined });
     }
     catch (e) {
       console.log(`upload_base64 error:`, e);
-      return reject({ error: true, filename: undefined, image_path: undefined, message: 'could not upload file...' });
+      return reject({ error: true, filename: undefined, filetype: undefined, file_path: undefined, message: 'could not upload file...' });
     }
   });
 }
@@ -207,8 +211,8 @@ export function store_base64_image(base64_image: string, public_id?: string): Pr
     }
 
     console.log(`attempting cloud upload...`);
-    cloudinary.uploader.upload(filedata.image_path, (error: any, result: any) => {
-      fs.unlink(filedata.image_path, (err: any) => {
+    cloudinary.uploader.upload(filedata.file_path, (error: any, result: any) => {
+      fs.unlink(filedata.file_path, (err: any) => {
         if (err) {
           console.log(err);
         } else {

@@ -52,7 +52,7 @@ import {
 import { UploadedFile } from 'express-fileupload';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { ServiceMethodResults, IModelValidator, PlainObject, ServiceMethodAsyncResults, IPaginateModelsOptions, IRandomModelsOptions } from '../interfaces/common.interface';
-import { IStoreImage, store_base64_image, store_image } from "./cloudinary-manager.utils";
+import { IStoreImage, decodeBase64, store_base64_image, store_image } from "./cloudinary-manager.utils";
 import { allowedImages } from "./constants.utils";
 import { validateName, validateEmail, validatePassword, numberValidator, genericTextValidator } from "./validators.utils";
 import { getRandomModels, paginateTable } from "src/repos/_common.repo";
@@ -309,6 +309,18 @@ export const validateData = (options: {
     }
   };
   return serviceMethodResults;
+}
+
+export async function isImageFileOrBase64(file: string | UploadedFile | undefined,) {
+  if (typeof file === 'string') {
+    const fileBuffer = decodeBase64(file);
+    const isInvalidType = !allowedImages.includes(fileBuffer.file_type.split('/')[1]);
+    return isInvalidType;
+  }
+  else {
+    const isInvalidType = !allowedImages.includes((<UploadedFile> file).mimetype.split('/')[1]);
+    return isInvalidType;
+  }
 }
 
 export const validateAndUploadImageFile = async (

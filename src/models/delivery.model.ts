@@ -89,6 +89,24 @@ export const Users = <MyModelStatic> sequelize.define('carry_users', {
   indexes: [{ unique: true, fields: ['email', 'paypal', 'uuid']} ] 
 });
 
+export const S3Objects = <MyModelStatic> sequelize.define('carry_s3_objects', {
+  id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  model_type:          { type: Sequelize.STRING, allowNull: true }, // determines if post belongs to a particular model; default (null) is user
+  model_id:            { type: Sequelize.INTEGER, allowNull: true },
+  name:                { type: Sequelize.STRING(500), allowNull: true },
+  description:         { type: Sequelize.STRING(500), allowNull: true },
+  mimetype:            { type: Sequelize.STRING(500), allowNull: true },
+  
+  bucket:              { type: Sequelize.STRING, allowNull: false },
+  key:                 { type: Sequelize.STRING, allowNull: false },
+
+  date_created:        { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:                { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 }
+}, {
+  ...common_options,
+  indexes: [{ unique: true, fields: ['bucket', 'key'] }]
+});
+
 export const UserFields = <MyModelStatic> sequelize.define('carry_user_fields', {
   id:                   { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
   user_id:              { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },

@@ -8,7 +8,7 @@ import * as UserRepo from '../repos/users.repo';
 import * as EmailVerfRepo from '../repos/email-verification.repo';
 import * as PhoneVerfRepo from '../repos/phone-verification.repo';
 import { TokensService } from './tokens.service';
-import { AuthorizeJWT, capitalize, create_user_required_props, getUserFullName, uniqueValue, validateAndUploadImageFile, validateData } from '../utils/helpers.utils';
+import { AuthorizeJWT, capitalize, create_user_required_props, getUserFullName, isImageFileOrBase64, uniqueValue, validateData } from '../utils/helpers.utils';
 import { IUser, IUserSubscriptionInfo } from '../interfaces/carry.interface';
 import { ResetPasswordRequests, SiteFeedbacks, Users } from '../models/delivery.model';
 import { get_user_unseen_notifications_count } from '../repos/notifications.repo';
@@ -20,7 +20,7 @@ import { validateEmail, validatePassword } from '../utils/validators.utils';
 import { API_KEY_SUBSCRIPTION_PLAN } from '../enums/common.enum';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { ServiceMethodAsyncResults, ServiceMethodResults, PlainObject } from '../interfaces/common.interface';
-import { delete_cloudinary_image } from '../utils/cloudinary-manager.utils';
+import { delete_cloudinary_image, upload_base64, upload_file } from '../utils/cloudinary-manager.utils';
 import { send_email } from '../utils/email-client.utils';
 import { send_verify_sms_request, cancel_verify_sms_request, check_verify_sms_request } from '../utils/sms-client.utils';
 import { SignedUp_EMAIL, PasswordReset_EMAIL, PasswordResetSuccess_EMAIL, VerifyEmail_EMAIL } from '../utils/template-engine.utils';
@@ -30,6 +30,8 @@ import { AppEnvironment } from 'src/utils/app.enviornment';
 import { HandlebarsEmailsService } from './emails.service';
 import { sendAwsEmail } from 'src/utils/ses.aws.utils';
 import { LOGGER } from 'src/utils/logger.utils';
+import { AwsS3Service } from 'src/utils/s3.utils';
+import { readFileSync } from 'fs';
 
 
 
@@ -1649,67 +1651,96 @@ export class UsersService {
     }
   }
 
+  // static async update_icon_via_aws_s3(options: {
+  //   you: IUser,
+  //   icon_file: UploadedFile | undefined,
+  //   should_delete: boolean,
+  // }): ServiceMethodAsyncResults {
+
+  // }
+
   static async update_icon(options: {
     you: IUser,
     icon_file: UploadedFile | undefined,
     should_delete: boolean,
   }): ServiceMethodAsyncResults {
-    try {
-      const { you, icon_file, should_delete } = options;
-      const updatesObj = {
-        icon_id: '',
-        icon_link: ''
-      };
-      
-      if (!icon_file) {
-        // clear icon
-        if (!should_delete) {
-          const serviceMethodResults: ServiceMethodResults = {
-            status: HttpStatusCode.BAD_REQUEST,
-            error: true,
-            info: {
-              message: `Picture file is required`,
-            }
-          };
-          return serviceMethodResults;
-        }
+    const { you, icon_file, should_delete } = options;
+    const isAwsS3Image = !!you.icon_id && you.icon_id.split('|')[0] === AppEnvironment.AWS.S3.BUCKET;
+    const updatesObj = {
+      icon_id: '',
+      icon_link: ''
+    };
 
-        const whereClause = { id: you.id };
-        const updates = await UserRepo.update_user(updatesObj, whereClause);
-        delete_cloudinary_image(you.icon_id);
-    
-        Object.assign(you, updatesObj);
-        const user = { ...you };
-        const jwt = TokensService.newUserJwtToken(user);
-        delete user.password;
-
+    // input guards
+    if (!icon_file) {
+      if (!should_delete) {
         const serviceMethodResults: ServiceMethodResults = {
-          status: HttpStatusCode.OK,
-          error: false,
+          status: HttpStatusCode.BAD_REQUEST,
+          error: true,
           info: {
-            message: 'Icon cleared successfully.',
-            data: {
-              you: user,
-              updates,
-              token: jwt,
-            }
+            message: `Picture file is required`,
           }
         };
         return serviceMethodResults;
       }
-
-      const imageValidation = await validateAndUploadImageFile(icon_file, {
-        treatNotFoundAsError: true,
-        mutateObj: updatesObj,
-        id_prop: 'icon_id',
-        link_prop: 'icon_link',
-      });
-      if (imageValidation.error) {
-        return imageValidation;
+      
+      const whereClause = { id: you.id };
+      const updates = await UserRepo.update_user(updatesObj, whereClause);
+      if (isAwsS3Image) {
+        const [Bucket, Key] = you.icon_id.split('|');
+        AwsS3Service.deleteObject({ Bucket, Key })
+        .then(() => {
+          LOGGER.error(`S3 delete object for user icon:`, { you });
+        })
+        .catch((error) => {
+          LOGGER.error(`S3 delete object failed for user icon:`, { you, error });
+        });
       }
-  
+      else {
+        delete_cloudinary_image(you.icon_id)
+        .then(() => {
+          LOGGER.error(`Cloudinary delete image for user icon:`, { you });
+        })
+        .catch((error) => {
+          LOGGER.error(`Cloudinary delete image failed for user icon:`, { you, error });
+        });
+      }
+    }
+
+    let filepath: string = '';
+    let filetype: string = '';
+    let filename: string = '';
+    if (typeof icon_file === 'string') {
+      // base64 string provided; attempt parsing...
+      const filedata = await upload_base64(icon_file);
+      filepath = filedata.file_path;
+      filetype = filedata.filetype;
+      filename = filedata.filename;
+    }
+    else {
+      const filedata = await upload_file(icon_file);
+      filetype = (<UploadedFile> icon_file).mimetype;
+      filepath = filedata.file_path;
+      filename = filedata.filename;
+    }
+
+    try {
+      const Key = `static/uploads/${filename}`;
+      const icon_id = `${AppEnvironment.AWS.S3.BUCKET}|${Key}`;
+      const icon_link = `${AppEnvironment.AWS.S3.SERVE_ORIGIN}/uploads/${filename}`;
+      updatesObj.icon_id = icon_id;
+      updatesObj.icon_link = icon_link;
+      const Body: Buffer = readFileSync(filepath);
+      await AwsS3Service.createObject({
+        Bucket: AppEnvironment.AWS.S3.BUCKET,
+        Key,
+        Body,
+        ContentType: filetype
+      });
+      LOGGER.info(`Uploaded user icon available via cdn: ${icon_link}`, { icon_link, icon_id });
+
       const updates = await UserRepo.update_user(updatesObj, { id: you.id });
-  
+    
       const user = { ...you, ...updatesObj };
       // console.log({ updates, results, user });
       delete user.password;
@@ -1728,7 +1759,8 @@ export class UsersService {
         }
       };
       return serviceMethodResults;
-    } catch (e) {
+    }
+    catch (e) {
       console.log('error:', e);
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.INTERNAL_SERVER_ERROR,
@@ -1789,16 +1821,19 @@ export class UsersService {
         };
         return serviceMethodResults;
       }
-  
-      const imageValidation = await validateAndUploadImageFile(wallpaper_file, {
+
+      const imageValidation = await AwsS3Service.uploadFile(wallpaper_file, {
         treatNotFoundAsError: true,
         mutateObj: updatesObj,
+        validateAsImage: true,
         id_prop: 'wallpaper_id',
         link_prop: 'wallpaper_link',
       });
       if (imageValidation.error) {
         return imageValidation;
       }
+
+      
       
       const whereClause = { id: you.id };
       const updates = await UserRepo.update_user(updatesObj, whereClause);

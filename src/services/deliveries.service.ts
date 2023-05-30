@@ -97,6 +97,7 @@ import { HttpStatusCode } from '../enums/http-codes.enum';
 import { validatePhone } from '../utils/validators.utils';
 import { send_sms } from '../utils/sms-client.utils';
 import { STATUSES, STRIPE_ACTION_EVENTS, TRANSACTION_STATUS } from '../enums/common.enum';
+import { AwsS3Service } from 'src/utils/s3.utils';
 
 
 
@@ -647,9 +648,10 @@ export class DeliveriesService {
       }
 
       // validate image
-      const imageValidation = await validateAndUploadImageFile(delivery_image, {
+      const imageValidation = await AwsS3Service.uploadFile(delivery_image, {
         treatNotFoundAsError: false,
         mutateObj: createObj,
+        validateAsImage: true,
         id_prop: 'item_image_id',
         link_prop: 'item_image_link',
       });
@@ -828,9 +830,10 @@ export class DeliveriesService {
         return dataValidation;
       }
 
-      const imageValidation = await validateAndUploadImageFile(delivery_image, {
+      const imageValidation = await AwsS3Service.uploadFile(delivery_image, {
         treatNotFoundAsError: false,
         mutateObj: createObj,
+        validateAsImage: true,
         id_prop: 'item_image_id',
         link_prop: 'item_image_link',
       });
@@ -1308,11 +1311,12 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await validateAndUploadImageFile(
+    const imageValidation = await AwsS3Service.uploadFile(
       tracking_update_image,
       {
         treatNotFoundAsError: false,
         mutateObj: createObj,
+        validateAsImage: true,
         id_prop: 'icon_id',
         link_prop: 'icon_link',
       },
@@ -1457,16 +1461,18 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    const imageValidation = await validateAndUploadImageFile(delivered_image, {
+    const updatesobj: PlainObject = {};
+    const imageValidation = await AwsS3Service.uploadFile(delivered_image, {
       treatNotFoundAsError: true,
+      validateAsImage: true,
+      mutateObj: updatesobj,
+      id_prop: 'delivered_image_id',
+      link_prop: 'delivered_image_link',
     });
     if (imageValidation.error) {
       return imageValidation;
     }
 
-    const updatesobj: PlainObject = {};
-    updatesobj.delivered_image_id = imageValidation.info.data.image_id;
-    updatesobj.delivered_image_link = imageValidation.info.data.image_link;
     const updates = await update_delivery(delivery_id, updatesobj);
 
     if (!ignoreNotification) {
@@ -1567,16 +1573,18 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const updatesobj: PlainObject = {};
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: true,
+      validateAsImage: true,
+      mutateObj: updatesobj,
+      id_prop: 'from_person_id_image_id',
+      link_prop: 'from_person_id_image_link',
     });
     if (imageValidation.error) {
       return imageValidation;
     }
 
-    const updatesobj: PlainObject = {};
-    updatesobj.from_person_id_image_id = imageValidation.info.data.image_id;
-    updatesobj.from_person_id_image_link = imageValidation.info.data.image_link;
     const updates = await update_delivery(delivery_id, updatesobj);
 
     const message = `Delivery added from person id picture!`;
@@ -1680,17 +1688,18 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const updatesobj: PlainObject = {};
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: true,
+      validateAsImage: true,
+      mutateObj: updatesobj,
+      id_prop: 'from_person_sig_image_id',
+      link_prop: 'from_person_sig_image_link',
     });
     if (imageValidation.error) {
       return imageValidation;
     }
 
-    const updatesobj: PlainObject = {};
-    updatesobj.from_person_sig_image_id = imageValidation.info.data.image_id;
-    updatesobj.from_person_sig_image_link =
-      imageValidation.info.data.image_link;
     const updates = await update_delivery(delivery_id, updatesobj);
 
     const message = `Delivery added from person sig picture!`;
@@ -1787,16 +1796,18 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const updatesobj: PlainObject = {};
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: true,
+      validateAsImage: true,
+      mutateObj: updatesobj,
+      id_prop: 'to_person_id_image_id',
+      link_prop: 'to_person_id_image_link',
     });
     if (imageValidation.error) {
       return imageValidation;
     }
-
-    const updatesobj: PlainObject = {};
-    updatesobj.to_person_id_image_id = imageValidation.info.data.image_id;
-    updatesobj.to_person_id_image_link = imageValidation.info.data.image_link;
+    
     const updates = await update_delivery(delivery_id, updatesobj);
 
     const message = `Delivery added to person id picture!`;
@@ -1893,16 +1904,18 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const updatesobj: PlainObject = {};
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: true,
+      validateAsImage: true,
+      mutateObj: updatesobj,
+      id_prop: 'to_person_sig_image_id',
+      link_prop: 'to_person_sig_image_link',
     });
     if (imageValidation.error) {
       return imageValidation;
     }
 
-    const updatesobj: PlainObject = {};
-    updatesobj.to_person_sig_image_id = imageValidation.info.data.image_id;
-    updatesobj.to_person_sig_image_link = imageValidation.info.data.image_link;
     const updates = await update_delivery(delivery_id, updatesobj);
 
     const message = `Delivery added to person sig picture!`;
@@ -2686,9 +2699,10 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: false,
       mutateObj: createObj,
+      validateAsImage: true,
       id_prop: 'image_id',
       link_prop: 'image_link',
     });
@@ -2758,9 +2772,10 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: false,
       mutateObj: createObj,
+      validateAsImage: true,
       id_prop: 'image_id',
       link_prop: 'image_link',
     });
@@ -3656,9 +3671,10 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: false,
       mutateObj: createObj,
+      validateAsImage: true,
       id_prop: 'image_id',
       link_prop: 'image_link',
     });
@@ -3738,9 +3754,10 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: false,
       mutateObj: createObj,
+      validateAsImage: true,
       id_prop: 'image_id',
       link_prop: 'image_link',
     });
@@ -3819,9 +3836,10 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await validateAndUploadImageFile(image, {
+    const imageValidation = await AwsS3Service.uploadFile(image, {
       treatNotFoundAsError: false,
       mutateObj: createObj,
+      validateAsImage: true,
       id_prop: 'image_id',
       link_prop: 'image_link',
     });
