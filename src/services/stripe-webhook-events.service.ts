@@ -515,8 +515,8 @@ export class StripeWebhookEventsRequestHandler {
             const user_name: string = `${delivery.owner!.firstname} ${delivery.owner!.lastname}`;
             sendAwsEmail({
               to: delivery.owner!.email,
-              subject: HandlebarsEmailsService.USERS.customer_unpiad_listing.subject(delivery.title),
-              html: HandlebarsEmailsService.USERS.customer_unpiad_listing.template({
+              subject: HandlebarsEmailsService.USERS.customer_unpaid_listing.subject(delivery.title),
+              html: HandlebarsEmailsService.USERS.customer_unpaid_listing.template({
                 user_name,
                 app_name: AppEnvironment.APP_NAME.DISPLAY,
                 delivery_title: delivery.title
