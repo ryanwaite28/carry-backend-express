@@ -45,9 +45,9 @@ export class HandlebarsEmailsService {
       template: compile(get_html_file_as_string('users', 'password_reset_success.html')),
     },
 
-    customer_unpiad_listing: {
+    customer_unpaid_listing: {
       subject: (delivery_title: string) => `${AppEnvironment.APP_NAME.DISPLAY} - Unpaid delivery listing: ${delivery_title}`,
-      template: compile(get_html_file_as_string('users', 'customer_unpiad_listing.html')),
+      template: compile(get_html_file_as_string('users', 'customer_unpaid_listing.html')),
     },
   };
 
