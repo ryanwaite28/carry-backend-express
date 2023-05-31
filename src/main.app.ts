@@ -1,38 +1,44 @@
 
 import * as dotenv from 'dotenv';
-import { exec } from 'child_process';
-// import {  } from 'os';
 dotenv.config();
+
+
+
+import { resolve } from 'path';
+import { exec } from 'child_process';
+import { LOGGER } from './utils/logger.utils';
+
+
 console.log(`process.env:`, process.env);
-console.log(`__dirname`, __dirname);
+console.log(`__dirname`, resolve(__dirname));
 console.log(`cwd`, process.cwd());
 
-exec('ls -atRl ./build', (err, stdout, stderr) => {
-  if (err) {
-    // node couldn't execute the command
-    console.log(`ls -atRl ./build error:`, err);
-    return;
-  }
+// exec('ls -atRl ./build', (err, stdout, stderr) => {
+//   if (err) {
+//     // node couldn't execute the command
+//     LOGGER.info(`ls -atRl ./build error:`, err);
+//     return;
+//   }
 
-  // the *entire* stdout and stderr (buffered)
-  console.log(`ls -atRl ./build`);
-  console.log(`stdout: ${stdout}`);
-  console.log(`stderr: ${stderr}`);
-});
+//   // the *entire* stdout and stderr (buffered)
+//   LOGGER.info(`ls -atRl ./build`);
+//   LOGGER.info(`stdout: ${stdout}`);
+//   LOGGER.info(`stderr: ${stderr}`);
+// });
 
 
-exec('ls -atl', (err, stdout, stderr) => {
-  if (err) {
-    // node couldn't execute the command
-    console.log(`ls -atl error:`, err);
-    return;
-  }
+// exec('ls -atl', (err, stdout, stderr) => {
+//   if (err) {
+//     // node couldn't execute the command
+//     console.log(`ls -atl error:`, err);
+//     return;
+//   }
 
-  // the *entire* stdout and stderr (buffered)
-  console.log(`ls -atl ./`);
-  console.log(`stdout: ${stdout}`);
-  console.log(`stderr: ${stderr}`);
-});
+//   // the *entire* stdout and stderr (buffered)
+//   LOGGER.info(`ls -atl ./`);
+//   LOGGER.info(`stdout: ${stdout}`);
+//   LOGGER.info(`stderr: ${stderr}`);
+// });
 
 
 

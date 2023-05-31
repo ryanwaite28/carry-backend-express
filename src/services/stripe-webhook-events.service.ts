@@ -37,7 +37,7 @@ export class StripeWebhookEventsRequestHandler {
         console.log({ check_user });
         if (check_user) {
           console.log(`Verifying stripe account for ${account.id}`);
-          UsersService.verify_stripe_account(check_user, '', false);
+          UsersService.verify_stripe_account(check_user, false);
         }
         break;
       }
@@ -97,7 +97,7 @@ export class StripeWebhookEventsRequestHandler {
           console.log({ check_user });
           if (check_user) {
             console.log(`Verifying stripe account for ${account.id}`);
-            UsersService.verify_stripe_account(check_user, '', false);
+            UsersService.verify_stripe_account(check_user, false);
           }
         }
         break;

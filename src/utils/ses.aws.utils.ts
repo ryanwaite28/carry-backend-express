@@ -1,5 +1,7 @@
 import { SESClient, SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import { AppEnvironment } from "./app.enviornment";
+import { isLocal } from "./constants.utils";
+import { LOGGER } from "./logger.utils";
 const aws_ses_client = new SESClient({ region: "us-east-1" });
 
 
@@ -10,6 +12,10 @@ export function sendAwsEmail(params: {
   message?: string,
   html?: string,
 }) {
+  if (isLocal) {
+    LOGGER.info(`Is local, not sending email...`, { isLocal });
+    return Promise.resolve();
+  }
   const sendCommandParams: SendEmailCommandInput = {
     Source: AppEnvironment.AWS.SES.EMAIL,
     Destination: {
@@ -28,15 +34,15 @@ export function sendAwsEmail(params: {
     ReplyToAddresses: [],
     SourceArn: AppEnvironment.AWS.SES.ARN
   };
-  console.log(`Sending email via AWS SES:`, params, sendCommandParams);
+  LOGGER.info(`Sending email via AWS SES:`, { params, sendCommandParams });
   const command = new SendEmailCommand(sendCommandParams);
   return aws_ses_client.send(command)
     .then((results) => {
-      console.log(`Email AWS SES send results:`, results);
+      LOGGER.info(`Email AWS SES send results:`, results);
       return results;
     })
     .catch((error) => {
-      console.log(`Email AWS SES send error:`, error);
+      LOGGER.info(`Email AWS SES send error:`, error);
       return error;
     });
 }

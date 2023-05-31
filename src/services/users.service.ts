@@ -1984,7 +1984,7 @@ export class UsersService {
     return serviceMethodResults;
   }
 
-  static async create_stripe_account(you_id: number, host: string, refreshUrl?: string, redirectUrl?: string): ServiceMethodAsyncResults {
+  static async create_stripe_account(you_id: number, redirectUrl?: string): ServiceMethodAsyncResults {
     const you_model: IUser | null = await UserRepo.get_user_by_id(you_id);
     if (!you_model) {
       const serviceMethodResults: ServiceMethodResults = {
@@ -2001,11 +2001,10 @@ export class UsersService {
 
     
     // fallback options
-    const useUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-stripe-account/${you.uuid}`;
-    const refresh_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/settings`;
-    const return_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/verify-stripe-account`;
+    const refresh_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/settings?stripeOnboardingRefresh=true`;
+    const useReturnUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/stripe-connect-onboarding-return?appDeepLinkRedirectURL=${redirectUrl}`;
     
-    const check_verified = await UsersService.verify_stripe_account(you, host, false, refreshUrl, redirectUrl);
+    const check_verified = await UsersService.verify_stripe_account(you, false, redirectUrl);
     if (check_verified.status === HttpStatusCode.OK) {
       return check_verified;
     }
@@ -2035,16 +2034,12 @@ export class UsersService {
     // https://stripe.com/docs/connect/collect-then-transfer-guide
     const createOpts = {
       account: account.id,
-      refresh_url: useUrl,
-      return_url: useUrl,
+      refresh_url,
+      return_url: useReturnUrl,
       type: 'account_onboarding',
-    } as any;
-    console.log({ createOpts, host, refresh_url, return_url });
+    } as Stripe.AccountLinkCreateParams;
+    LOGGER.info(`UsersService.create_stripe_account - create params:`, { createOpts });
     const accountLinks = await StripeService.stripe.accountLinks.create(createOpts);
-
-    const log = { updates, account, accountLinks };
-
-    console.log(log, JSON.stringify(log));
 
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,
@@ -2058,7 +2053,7 @@ export class UsersService {
     return serviceMethodResults;
   }
 
-  static async verify_stripe_account(user: IUser, host: string, createLinks: boolean, refreshUrl?: string, redirectUrl?: string): ServiceMethodAsyncResults {
+  static async verify_stripe_account(user: IUser, createLinks: boolean, redirectUrl?: string): ServiceMethodAsyncResults {
     let you: IUser = { ...user };
 
     if (!you.stripe_account_id) {
@@ -2088,9 +2083,9 @@ export class UsersService {
 
     let accountLinks: PlainObject = {};
 
-    const useUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-stripe-account/${you.uuid}`;
-    const refresh_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/settings`;
-    const return_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/verify-stripe-account`;
+    // const useUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/verify-stripe-account/${you.uuid}`;
+    const refresh_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/settings?stripeOnboardingRefresh=true`;
+    const useReturnUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/stripe-connect-onboarding-return?appDeepLinkRedirectURL=${redirectUrl}`;
 
     // const useUrl = `carry://settings/`;
 
@@ -2117,18 +2112,14 @@ export class UsersService {
       });
     }
     else if (createLinks) {
-      const useHost = host?.endsWith('/') ? host.substr(0, host.length - 1) : host;
-      const refresh_url = `${useHost}/users/${you.id}/settings`;
-      const return_url = `${useHost}/users/${you.id}/verify-stripe-account`;
-  
       const createOpts = {
         account: you.stripe_account_id,
-        refresh_url: useUrl,
-        return_url: useUrl,
+        refresh_url,
+        return_url: useReturnUrl,
         type: 'account_onboarding',
-      } as any;
-      console.log({ createOpts, host, refresh_url, return_url });
-      const accountLinks = await StripeService.stripe.accountLinks.create(createOpts);
+      } as Stripe.AccountLinkCreateParams;
+      LOGGER.info(`UsersService.create_stripe_account - create params:`, { createOpts });
+      accountLinks = await StripeService.stripe.accountLinks.create(createOpts);
 
       console.log({ accountLinks });
     }
@@ -2149,7 +2140,7 @@ export class UsersService {
     return serviceMethodResults;
   }
 
-  static async verify_stripe_account_by_uuid(user_uuid: string, host: string, createLinks?: boolean, refreshUrl?: string, redirectUrl?: string): ServiceMethodAsyncResults {
+  static async verify_stripe_account_by_uuid(user_uuid: string, createLinks?: boolean, redirectUrl?: string): ServiceMethodAsyncResults {
     if (!user_uuid) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
@@ -2204,8 +2195,8 @@ export class UsersService {
     console.log({ results });
 
     let accountLinks: PlainObject = {};
-
-    const useUrl = `carry://settings/`;
+    const refresh_url = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/users/${you.id}/settings?stripeOnboardingRefresh=true`;
+    const useReturnUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/stripe-connect-onboarding-return?appDeepLinkRedirectURL=${redirectUrl}`;
     
     if (!results.error) {
       await UserRepo.update_user({ stripe_account_verified: true }, { id: you.id });
@@ -2222,17 +2213,13 @@ export class UsersService {
       });
     }
     else if (createLinks) {
-      const useHost = host?.endsWith('/') ? host.substr(0, host.length - 1) : host;
-      const refresh_url = `${useHost}/users/${you.id}/settings`;
-      const return_url = `${useHost}/users/${you.id}/verify-stripe-account`;
-  
       const createOpts = {
         account: you.stripe_account_id,
-        refresh_url: useUrl,
-        return_url: useUrl,
+        refresh_url,
+        return_url: useReturnUrl,
         type: 'account_onboarding',
-      } as any;
-      console.log({ createOpts, host, refresh_url, return_url });
+      } as Stripe.AccountLinkCreateParams;
+      LOGGER.info(`UsersService.create_stripe_account - create params:`, { createOpts });
       const accountLinks = await StripeService.stripe.accountLinks.create(createOpts);
 
       console.log({ accountLinks });

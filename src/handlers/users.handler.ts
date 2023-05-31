@@ -252,20 +252,16 @@ export class UsersRequestHandler {
   
   static async create_stripe_account(request: Request, response: Response): ExpressResponse {
     const you: IUser = response.locals.you;
-    const host: string = request.get('origin')!;
-    const refreshUrl = request.query.refreshUrl || request.body.refreshUrl;
     const redirectUrl = request.query.redirectUrl || request.body.redirectUrl;
-    const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_account(you.id, host, refreshUrl, redirectUrl);
+    const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_account(you.id, redirectUrl);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
   
   
   static async verify_stripe_account(request: Request, response: Response): ExpressResponse {
     const you: IUser = response.locals.you;
-    const host: string = request.get('origin')!;
-    const refreshUrl = request.query.refreshUrl || request.body.refreshUrl;
     const redirectUrl = request.query.redirectUrl || request.body.redirectUrl;
-    const serviceMethodResults: ServiceMethodResults = await UsersService.verify_stripe_account(you, host, true, refreshUrl, redirectUrl);
+    const serviceMethodResults: ServiceMethodResults = await UsersService.verify_stripe_account(you, true, redirectUrl);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
 
@@ -274,7 +270,7 @@ export class UsersRequestHandler {
     const host: string = request.get('origin')!;
     const refreshUrl = request.query.refreshUrl || request.body.refreshUrl;
     const redirectUrl = request.query.redirectUrl || request.body.redirectUrl;
-    const serviceMethodResults: ServiceMethodResults = await UsersService.verify_stripe_account_by_uuid(request.params.user_uuid, host, true, refreshUrl, redirectUrl);
+    const serviceMethodResults: ServiceMethodResults = await UsersService.verify_stripe_account_by_uuid(request.params.user_uuid, true, redirectUrl);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
 
