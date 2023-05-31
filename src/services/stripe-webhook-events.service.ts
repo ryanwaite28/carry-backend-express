@@ -3,7 +3,7 @@ import { get_user_by_stripe_connected_account_id, get_user_by_stripe_customer_ac
 import Stripe from 'stripe';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { UsersService } from './users.service';
-import { create_delivery_unpaid_listing, get_delivery_by_id, get_delivery_by_payment_intent_id, get_delivery_dispute_by_delivery_id } from 'src/repos/deliveries.repo';
+import { create_delivery_unpaid_listing, delete_delivery, get_delivery_by_id, get_delivery_by_payment_intent_id, get_delivery_dispute_by_delivery_id } from 'src/repos/deliveries.repo';
 import { LOGGER } from 'src/utils/logger.utils';
 import { StripeService } from './stripe.service';
 import { sendAwsEmail } from 'src/utils/ses.aws.utils';
@@ -461,6 +461,17 @@ export class StripeWebhookEventsRequestHandler {
 
         // check if the delivery listing is deleted;
         const delivery = await get_delivery_by_payment_intent_id(paymentIntent.id);
+        if (!!delivery && !delivery.carrier_id) {
+          // no one took this listing job, delete and notify
+          await delete_delivery(delivery.id);
+          ExpoPushNotificationsService.sendUserPushNotification({
+            user_id: delivery.owner_id,
+            message: `Deleted expired delivery listing: ${delivery.title}. The hold on your payment has been released and should return in a few business days.`,
+            data: { delivery_id: delivery.id },
+          });
+          return;
+        }
+
         if (!delivery) {
           // the owner must have canceled the listing and the hold was already released upon that delete request; no further actions needed
           LOGGER.info(`payment_intent.canceled - No delivery found by payment intent: ${paymentIntent.id}; owner must have canceled listing.`);

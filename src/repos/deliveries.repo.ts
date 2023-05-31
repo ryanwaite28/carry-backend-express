@@ -543,8 +543,8 @@ export function browse_recent_deliveries(
 
   const findQuery = {
     where: useWhere,
-    include: deliveryMasterIncludes,
-    order: deliveryTrackingOrderBy,
+    include: deliveryGeneralIncludes,
+    // order: deliveryTrackingOrderBy,
     limit: 10,
   };
 
@@ -569,7 +569,7 @@ export function browse_featured_deliveries(
   const findQuery = {
     where: useWhere,
     include: deliveryMasterIncludes,
-    order: deliveryTrackingOrderBy,
+    // order: deliveryTrackingOrderBy,
     limit: 10,
   };
 
