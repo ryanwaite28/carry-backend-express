@@ -556,7 +556,7 @@ export class UsersService {
   }): ServiceMethodAsyncResults {
     const {
       firstname,
-      middlename,
+      // middlename,
       lastname,
       username,
       displayname,
@@ -612,15 +612,16 @@ export class UsersService {
   
     /* Data Is Valid */
   
+    const hash = bcrypt.hashSync(password);
     const createInfo = {
       firstname: capitalize(firstname),
-      middlename: middlename && capitalize(middlename) || '',
+      // middlename: middlename && capitalize(middlename) || '',
       lastname: capitalize(lastname),
       // gender: parseInt(gender, 10),
       username: (username || Date.now().toString()).toLowerCase(),
       displayname: `${capitalize(firstname)} ${capitalize(lastname)}`,
       email: email.toLowerCase(),
-      password: bcrypt.hashSync(password),
+      password: hash,
     };
     let new_user_model: IUser | null = await UserRepo.create_user(createInfo);
     let new_user = new_user_model!;
@@ -629,7 +630,7 @@ export class UsersService {
     const user_api_key = await UserRepo.create_user_api_key({
       user_id: new_user.id,
       firstname: new_user.firstname,
-      middlename: new_user.middlename,
+      middlename: new_user.middlename || '',
       lastname: new_user.lastname,
       email: new_user.email,
       subscription_plan: API_KEY_SUBSCRIPTION_PLAN.FREE,
@@ -1985,6 +1986,7 @@ export class UsersService {
   }
 
   static async create_stripe_account(you_id: number, redirectUrl?: string): ServiceMethodAsyncResults {
+    console.log(`UsersService.create_stripe_account:`, { you_id, redirectUrl });
     const you_model: IUser | null = await UserRepo.get_user_by_id(you_id);
     if (!you_model) {
       const serviceMethodResults: ServiceMethodResults = {

@@ -48,7 +48,7 @@ export function get_user_by_username_or_email(email_or_username: string) {
 export async function create_user(
   params: {
     firstname: string;
-    middlename: string;
+    middlename?: string | null;
     lastname: string;
     // gender?: number;
     username: string;

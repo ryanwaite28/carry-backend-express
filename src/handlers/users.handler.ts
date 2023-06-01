@@ -253,6 +253,7 @@ export class UsersRequestHandler {
   static async create_stripe_account(request: Request, response: Response): ExpressResponse {
     const you: IUser = response.locals.you;
     const redirectUrl = request.query.redirectUrl || request.body.redirectUrl;
+    console.log(`UsersService.create_stripe_account:`, { you, redirectUrl });
     const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_account(you.id, redirectUrl);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
