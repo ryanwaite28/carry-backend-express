@@ -71,8 +71,6 @@ installExpressApp(app);
 
 app.set('trust proxy', true);
 
-app.use(RequestLoggerMiddleware);
-
 const appServer: http.Server = http.createServer(app);
 
 

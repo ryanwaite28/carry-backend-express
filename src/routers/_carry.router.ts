@@ -9,6 +9,7 @@ import { DeliveriesRouter } from './deliveries.router';
 import { UsersRouter } from './users.router';
 import { CommonRouter } from './common.router';
 import { CsrfProtectionMiddleware } from 'src/middlewares/csrf.middleware';
+import { RequestLoggerMiddleware } from 'src/middlewares/request-logger.middleware';
 
 
 export const CarryRouter: Router = Router({ mergeParams: true });
@@ -18,6 +19,8 @@ CarryRouter.use(express_device.capture());
 CarryRouter.use(cookie_parser.default());
 CarryRouter.use(body_parser.json());
 CarryRouter.use(body_parser.urlencoded({ extended: false }));
+
+CarryRouter.use(RequestLoggerMiddleware);
 
 
 
