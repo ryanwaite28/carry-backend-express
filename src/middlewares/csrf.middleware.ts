@@ -16,7 +16,7 @@ const CSRF_SAFE_METHODS = ['GET', 'OPTIONS', 'HEAD'];
 const cookieOptions: CookieOptions = {
   httpOnly: false,
   path: `/`,
-  domain: AppEnvironment.USE_CLIENT_DOMAIN_URL,
+  domain: AppEnvironment.USE_CLIENT_DOMAIN_NAME,
   sameSite: 'none',
   secure: true,
   // expires: moment().add(1, 'hour').toDate()
