@@ -10,6 +10,7 @@ import { get_delivery_by_id, get_delivery_tracking_update_by_id, get_delivery_di
 import { get_user_by_id } from "../repos/users.repo";
 import { getUserFullName } from "./helpers.utils";
 import { genericTextValidator, stripeValidators, numberValidator, booleanValidator, validatePersonName, phoneValidator, validateEmail } from "./validators.utils";
+import moment from 'moment';
 
 
 export const delivery_attrs_slim = [
@@ -896,3 +897,12 @@ export const delivery_search_attrs = [
   "to_state",
   "to_zipcode",
 ];
+
+export enum MomentFormats {
+  FULL = `MMM DD YYYY - h:mm:ss a`,
+}
+
+export const dateTimeTransform = (value: string | Date | number, format: string = MomentFormats.FULL): string => {
+  const datetime = moment(value).format(format);
+  return datetime;
+};

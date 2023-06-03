@@ -445,7 +445,35 @@ export const Delivery = <MyModelStatic> sequelize.define('carry_deliveries', {
   uuid:                                 { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
 
-// Delivery.sync({ alter: true }); 
+export const UserNewListingsAlerts = <MyModelStatic> sequelize.define('carry_user_new_listings_alerts', {
+  id:                { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:           { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  label:             { type: Sequelize.STRING, allowNull: false, defaultValue: '' },
+  to_city:           { type: Sequelize.STRING(500), allowNull: false, defaultValue: '' },
+  to_state:          { type: Sequelize.STRING(500), allowNull: false, defaultValue: '' },
+  from_city:         { type: Sequelize.STRING(500), allowNull: false, defaultValue: '' },
+  from_state:        { type: Sequelize.STRING(500), allowNull: false, defaultValue: '' },
+  
+  date_created:       { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+export const UserLastAlertedTimes = <MyModelStatic> sequelize.define('carry_user_last_alerted_times', {
+  id:                { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:           { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  
+  lasted_alerted:     { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+export const ListingsAlertsLastPushed = <MyModelStatic> sequelize.define('carry_listings_alerts_last_pushed', {
+  id:                { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  date_created:     { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+
+// UserNewListingsAlerts.sync({ alter: true }); 
 
 export const DeliveryCarrierTrackLocationRequests = <MyModelStatic> sequelize.define('carry_delivery_carrier_track_location_requests', {
   id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -670,6 +698,34 @@ export const CarryUserRatings = <MyModelStatic> sequelize.define('carry_user_rat
   uuid:                { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 },
 }, common_options);
 
+export const CarryUserCustomerRatings = <MyModelStatic> sequelize.define('carry_user_customer_ratings', {
+  id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:             { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  writer_id:           { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  delivery_id:         { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
+  rating:              { type: Sequelize.INTEGER, allowNull: false, defaultValue: 5 },
+  title:               { type: Sequelize.TEXT, allowNull: true, defaultValue: '' },
+  summary:             { type: Sequelize.STRING, allowNull: true, defaultValue: '' },
+  image_link:          { type: Sequelize.STRING(500), allowNull: true, defaultValue: '' },
+  image_id:            { type: Sequelize.STRING(500), allowNull: true, defaultValue: '' },
+  date_created:        { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:                { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 },
+}, common_options);
+
+export const CarryUserCarrierRatings = <MyModelStatic> sequelize.define('carry_user_carrier_ratings', {
+  id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:             { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  writer_id:           { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  delivery_id:         { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
+  rating:              { type: Sequelize.INTEGER, allowNull: false, defaultValue: 5 },
+  title:               { type: Sequelize.TEXT, allowNull: true, defaultValue: '' },
+  summary:             { type: Sequelize.STRING, allowNull: true, defaultValue: '' },
+  image_link:          { type: Sequelize.STRING(500), allowNull: true, defaultValue: '' },
+  image_id:            { type: Sequelize.STRING(500), allowNull: true, defaultValue: '' },
+  date_created:        { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:                { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 },
+}, common_options);
+
 
 export const AccountsReported = <MyModelStatic> sequelize.define('carry_accounts_reported', {
   id:                  { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -730,6 +786,23 @@ CarryUserRatings.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey
 Users.hasOne(CarryUserRatings, { as: 'carry_written_ratings', foreignKey: 'writer_id', sourceKey: 'id' });
 CarryUserRatings.belongsTo(Users, { as: 'writer', foreignKey: 'writer_id', targetKey: 'id' });
 
+Users.hasMany(CarryUserCustomerRatings, { as: 'carry_received_customer_ratings', foreignKey: 'user_id', sourceKey: 'id' });
+CarryUserCustomerRatings.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
+Users.hasMany(CarryUserCustomerRatings, { as: 'carry_written_customer_ratings', foreignKey: 'writer_id', sourceKey: 'id' });
+CarryUserCustomerRatings.belongsTo(Users, { as: 'writer', foreignKey: 'writer_id', targetKey: 'id' });
+
+Users.hasMany(CarryUserCarrierRatings, { as: 'carry_received_carrier_ratings', foreignKey: 'user_id', sourceKey: 'id' });
+CarryUserCarrierRatings.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
+Users.hasMany(CarryUserCarrierRatings, { as: 'carry_written_carrier_ratings', foreignKey: 'writer_id', sourceKey: 'id' });
+CarryUserCarrierRatings.belongsTo(Users, { as: 'writer', foreignKey: 'writer_id', targetKey: 'id' });
+
+
+Delivery.hasOne(CarryUserCustomerRatings, { as: 'customer_rating', foreignKey: 'delivery_id', sourceKey: 'id' });
+CarryUserCustomerRatings.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
+Delivery.hasOne(CarryUserCarrierRatings, { as: 'carrier_rating', foreignKey: 'delivery_id', sourceKey: 'id' });
+CarryUserCarrierRatings.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
+
+
 Users.hasMany(Notifications, { as: 'to_notifications', foreignKey: 'to_id', sourceKey: 'id' });
 Notifications.belongsTo(Users, { as: 'to', foreignKey: 'to_id', targetKey: 'id' });
 Users.hasMany(Notifications, { as: 'from_notifications', foreignKey: 'from_id', sourceKey: 'id' });
@@ -755,6 +828,9 @@ DeliveryInsurances.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_i
 
 Users.hasMany(DeliveryMessages, { as: 'delivery_messages_sent', foreignKey: 'user_id', sourceKey: 'id' });
 DeliveryMessages.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
+
+Users.hasMany(UserNewListingsAlerts, { as: 'new_listings_alerts', foreignKey: 'user_id', sourceKey: 'id' });
+UserNewListingsAlerts.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
 
 Delivery.hasMany(DeliveryMessages, { as: 'delivery_messages', foreignKey: 'delivery_id', sourceKey: 'id' });
 DeliveryMessages.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });

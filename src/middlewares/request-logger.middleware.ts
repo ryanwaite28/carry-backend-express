@@ -1,15 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { REQUESTS_FILE_LOGGER } from "src/utils/logger.utils";
-import moment from "moment";
+import { dateTimeTransform } from "src/utils/carry.chamber";
 
 
-enum MomentFormats {
-  FULL = `MMM DD YYYY - h:mm:ss a`,
-}
-const dateTimeTransform = (value: string | Date | number, format: string = MomentFormats.FULL): string => {
-  const datetime = moment(value).format(format);
-  return datetime;
-};
+
 
 
 export function RequestLoggerMiddleware(request: Request, response: Response, next: NextFunction) {

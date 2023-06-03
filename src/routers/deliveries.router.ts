@@ -25,6 +25,8 @@ import {
   IsNotSettlementOfferCreator
 } from "../guards/delivery-dispute.guard";
 import { YouAuthorizedSlim, YouAuthorizedSlimWeak } from '../guards/you.guard';
+import { ValidateRequestBodyDto } from 'src/middlewares/class-transformer-validator.middleware';
+import { DeliveryRatingDto } from 'src/dto/rating.dto';
 
 
 export const DeliveriesRouter: Router = Router({ mergeParams: true });
@@ -61,8 +63,8 @@ DeliveriesRouter.post('/:delivery_id/carrier-self-pay', YouAuthorizedSlim, Deliv
 DeliveriesRouter.post('/:delivery_id/payment-success', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.payment_success);
 DeliveriesRouter.post('/:delivery_id/payment-cancel', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.payment_cancel);
 
-DeliveriesRouter.post('/:delivery_id/leave-delivery-owner-review', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryCarrier, DeliveriesRequestHandler.leave_delivery_owner_review);
-DeliveriesRouter.post('/:delivery_id/leave-delivery-carrier-review', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryOwner, DeliveriesRequestHandler.leave_delivery_carrier_review);
+DeliveriesRouter.post('/:delivery_id/ratings/customer', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryCarrier, DeliveriesRequestHandler.leave_delivery_owner_review);
+DeliveriesRouter.post('/:delivery_id/ratings/carrier', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryOwner, DeliveriesRequestHandler.leave_delivery_carrier_review);
 
 DeliveriesRouter.post('/:delivery_id/request-carrier-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveryNotCompleted, IsNotDeliveryCarrierLocationRequestCompleted, DeliveriesRequestHandler.request_carrier_location);
 DeliveriesRouter.post('/:delivery_id/cancel-request-carrier-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveryNotCompleted, DeliveriesRequestHandler.cancel_request_carrier_location);

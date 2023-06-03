@@ -3,9 +3,9 @@ import {
   Op,
   WhereOptions
 } from 'sequelize';
-import { IUser, IUserExpoDevice, IMyModel, IApiKey, IResetPasswordRequest } from '../interfaces/carry.interface';
+import { IUser, IUserExpoDevice, IMyModel, IApiKey, IResetPasswordRequest, IUserNewListingsAlert } from '../interfaces/carry.interface';
 import { PlainObject } from '../interfaces/common.interface';
-import { Users, ResetPasswordRequests, UserExpoDevices, ApiKeys } from '../models/delivery.model';
+import { Users, ResetPasswordRequests, UserExpoDevices, ApiKeys, UserNewListingsAlerts } from '../models/delivery.model';
 import { user_attrs_slim } from '../utils/constants.utils';
 import { convertModelCurry, convertModelsCurry, convertModel, create_model_crud_repo_from_model_class } from '../utils/helpers.utils';
 
@@ -13,6 +13,7 @@ import { convertModelCurry, convertModelsCurry, convertModel, create_model_crud_
 
 
 const user_password_reset_request_crud = create_model_crud_repo_from_model_class<IResetPasswordRequest>(ResetPasswordRequests);
+const user_new_listings_alerts_crud = create_model_crud_repo_from_model_class<IUserNewListingsAlert>(UserNewListingsAlerts);
 
 
 const convertUserModel = convertModelCurry<IUser>();
@@ -391,4 +392,67 @@ export function get_password_reset_request_by_code(uuid: string) {
 
 export function mark_password_reset_request_completed(id: number) {
   return user_password_reset_request_crud.updateById(id, { completed: true });
+}
+
+
+
+export function get_user_new_listings_alerts_by_where(where: any) {
+  return user_new_listings_alerts_crud.findAll({ where });
+}
+
+export function get_user_new_listings_alerts_by_id(id: number) {
+  return user_new_listings_alerts_crud.findOne({ where: { id } });
+}
+
+export function get_user_new_listings_alerts_by_id_and_user_id(id: number, user_id: number) {
+  return user_new_listings_alerts_crud.findOne({ where: { id, user_id } });
+}
+
+export function create_user_new_listings_alert(params: {
+  user_id: number,
+  label: string
+  to_city: string,
+  to_state: string,
+  from_city: string,
+  from_state: string,
+}) {
+  return user_new_listings_alerts_crud.create(params);
+}
+
+export function delete_user_new_listings_alert(id: number) {
+  return user_new_listings_alerts_crud.deleteById(id);
+}
+
+export function check_user_new_listings_alert(params: {
+  user_id: number,
+  to_city: string,
+  to_state: string,
+  from_city: string,
+  from_state: string,
+}) {
+  return user_new_listings_alerts_crud.findOne({
+    where: {
+      user_id: params.user_id,
+      from_city: { [Op.like]: `%${params.from_city}%` },
+      from_state: { [Op.like]: `%${params.from_state}%` },
+      to_city: { [Op.like]: `%${params.to_city}%` },
+      to_state: { [Op.like]: `%${params.to_state}%` },
+    }
+  });
+}
+
+export function get_user_new_listings_alerts_all(user_id: number) {
+  return user_new_listings_alerts_crud.findAll({
+    where: { user_id },
+    order: [['id', 'DESC']]
+  });
+}
+
+export function get_user_new_listings_alerts(user_id: number, listing_alert_id?: number) {
+  return user_new_listings_alerts_crud.paginate({
+    user_id_field: 'user_id',
+    user_id,
+    min_id: listing_alert_id,
+    orderBy: [['id', 'DESC']]
+  });
 }

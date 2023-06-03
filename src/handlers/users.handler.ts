@@ -334,5 +334,49 @@ export class UsersRequestHandler {
     const serviceMethodResults: ServiceMethodResults = await UsersService.cancel_subscription(you);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
+
+
+
+  @CatchRequestHandlerError()
+  static async get_user_new_listings_alerts(request: Request, response: Response): ExpressResponse {
+    const you: IUser = response.locals.you; 
+    const listing_alert_id: number = parseInt(request.params.listing_alert_id, 10);
+    
+    const serviceMethodResults: ServiceMethodResults = await UsersService.get_user_new_listings_alerts(you.id, listing_alert_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async get_user_new_listings_alerts_all(request: Request, response: Response): ExpressResponse {
+    const you: IUser = response.locals.you; 
+
+    const serviceMethodResults: ServiceMethodResults = await UsersService.get_user_new_listings_alerts_all(you.id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async create_user_new_listings_alert(request: Request, response: Response): ExpressResponse {
+    const you: IUser = response.locals.you;
+    const { from_city, from_state, to_city, to_state, label } = request.body;
+
+    const serviceMethodResults: ServiceMethodResults = await UsersService.create_user_new_listings_alert({
+      user_id: you.id,
+      from_city: from_city || '',
+      from_state: from_state || '',
+      to_city: to_city || '',
+      to_state: to_state || '',
+      label
+    });
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async delete_user_new_listings_alert(request: Request, response: Response): ExpressResponse {
+    const you: IUser = response.locals.you; 
+    const listing_alert_id: number = parseInt(request.params.listing_alert_id, 10);
+
+    const serviceMethodResults: ServiceMethodResults = await UsersService.delete_user_new_listings_alert(you.id, listing_alert_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
 }
 

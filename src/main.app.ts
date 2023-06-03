@@ -53,10 +53,13 @@ import { uniqueValue } from './utils/helpers.utils';
 import { StripeService } from './services/stripe.service';
 import { StripeWebhookEventsRequestHandler } from './services/stripe-webhook-events.service';
 import { CarryRouter } from './routers/_carry.router';
-import { carry_db_init } from './models/_def.model';
+import { carry_db_init, sequelizeInst } from './models/_def.model';
 import { installExpressApp } from './utils/template-engine.utils';
 import { RequestLoggerMiddleware } from './middlewares/request-logger.middleware';
 import { AppEnvironment } from './utils/app.enviornment';
+import moment from 'moment';
+import { QueryTypes } from 'sequelize';
+import { startPushNewListingsAlertsNotificationsIntervalJob } from './workers/master.worker';
 
 
 
@@ -146,8 +149,16 @@ try {
     /** Start Server */
     appServer.listen(PORT);
     console.log(`Listening on port ${PORT}...\n\n`);
+
+
+
+    startPushNewListingsAlertsNotificationsIntervalJob().subscribe({
+      next: () => {}
+    });
+
   });  
-} catch (error) {
+} 
+catch (error) {
   console.log(`db_init error...`, { error });
   throw error;
 }

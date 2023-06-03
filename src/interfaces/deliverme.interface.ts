@@ -75,6 +75,9 @@ export interface ICarryUserRating extends ICommonModel {
   summary: string,
   image_link: string,
   image_id: string,
+
+  user?: ICarryUser,
+  writer?: ICarryUser,
 }
 
 
@@ -195,6 +198,9 @@ export interface IDelivery extends ICommonModel {
   delivery_carrier_track_location_updates?: IDeliveryCarrierTrackLocationUpdate[],
 
   delivery_dispute?: IDeliveryDispute,
+  
+  carrier_rating?: ICarryUserRating,
+  customer_rating?: ICarryUserRating,
 }
 
 export interface ICarryUser extends IUser {

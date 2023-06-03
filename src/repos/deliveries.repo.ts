@@ -42,7 +42,9 @@ import {
   Delivery,
   DeliveryDisputeCustomerSupportMessages,
   CarryUserProfileSettings,
-  CarryUserRatings,
+  // CarryUserRatings,
+  CarryUserCustomerRatings,
+  CarryUserCarrierRatings,
   DeliveryInsurances,
   DeliveryUnpaidListings,
 } from "../models/delivery.model";
@@ -62,6 +64,8 @@ import { getAll, paginateTable } from "./_common.repo";
 
 const delivery_crud = create_model_crud_repo_from_model_class<IDelivery>(Delivery);
 const delivery_unpaid_listings_crud = create_model_crud_repo_from_model_class<IDeliveryUnpaidListing>(DeliveryUnpaidListings);
+const customer_ratings_crud = create_model_crud_repo_from_model_class<ICarryUserRating>(CarryUserCustomerRatings);
+const carrier_ratings_crud = create_model_crud_repo_from_model_class<ICarryUserRating>(CarryUserCarrierRatings);
 
 
 
@@ -75,6 +79,26 @@ export const deliveryTrackingOrderBy: Order = [
 
 const convertDeliveryModel = convertModelCurry<IDelivery>();
 const convertDeliveryModels = convertModelsCurry<IDelivery>();
+
+export const deliveryGeneralIncludes: Includeable[] = [{
+  model: Users,
+  as: 'owner',
+  attributes: user_attrs_slim,
+}, {
+  model: Users,
+  as: 'carrier',
+  attributes: user_attrs_slim,
+}];
+
+export const deliveryRatingsInclude: Includeable[] = [{
+  model: Users,
+  as: 'user',
+  attributes: user_attrs_slim,
+}, {
+  model: Users,
+  as: 'writer',
+  attributes: user_attrs_slim,
+}];
 
 export const deliveryMasterIncludes: Includeable[] = [
   {
@@ -124,6 +148,16 @@ export const deliveryMasterIncludes: Includeable[] = [
     as: `delivery_carrier_track_location_requests`,
   },
   {
+    model: CarryUserCustomerRatings,
+    as: `customer_rating`,
+    // include: deliveryRatingsInclude
+  },
+  {
+    model: CarryUserCarrierRatings,
+    as: `carrier_rating`,
+    // include: deliveryRatingsInclude
+  },
+  {
     model: DeliveryCarrierTrackLocationUpdates,
     as: `delivery_carrier_track_location_updates`,
   },
@@ -140,15 +174,7 @@ export const deliveryMasterIncludes: Includeable[] = [
   }
 ];
 
-export const deliveryGeneralIncludes: Includeable[] = [{
-  model: Users,
-  as: 'owner',
-  attributes: user_attrs_slim,
-}, {
-  model: Users,
-  as: 'carrier',
-  attributes: user_attrs_slim,
-}];
+
 
 export const deliveryDisputeMasterIncludes: Includeable[] = [
   {
@@ -743,28 +769,9 @@ export function create_delivery_carrier_lat_lng_location_update(params: {
 
 
 
-export function get_delivery_review_by_id(id: number) {
-  return CarryUserRatings.findOne({
-    where: { id },
-    include: [
-      {
-        model: Users,
-        as: `user`,
-        attributes: user_attrs_slim
-      },
-      {
-        model: Users,
-        as: `writer`,
-        attributes: user_attrs_slim
-      }
-    ]
-  }).then((model) => {
-    return !model ? null : model.toJSON() as ICarryUserRating;
-  });
-}
 
 
-export function leave_delivery_review(params: {
+export function leave_delivery_customer_review(params: {
   user_id: number,
   writer_id: number,
   delivery_id: number,
@@ -774,12 +781,26 @@ export function leave_delivery_review(params: {
   image_link?: string,
   image_id?: string,
 }) {
-  return CarryUserRatings.create(params)
+  return customer_ratings_crud.create(params)
     .then((model) => {
-      return get_delivery_review_by_id(model.get(`id`));
-    })
-    .then((obj) => {
-      return obj!;
+      return customer_ratings_crud.findById(model.id, { include: deliveryRatingsInclude });
+    });
+}
+
+
+export function leave_delivery_carrier_review(params: {
+  user_id: number,
+  writer_id: number,
+  delivery_id: number,
+  rating: number,
+  title: string,
+  summary: string,
+  image_link?: string,
+  image_id?: string,
+}) {
+  return carrier_ratings_crud.create(params)
+    .then((model) => {
+      return carrier_ratings_crud.findById(model.id, { include: deliveryRatingsInclude });
     });
 }
 

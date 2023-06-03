@@ -42,7 +42,8 @@ import {
   get_delivery_carrier_location_request_pending,
   create_delivery_carrier_location_request,
   create_delivery_carrier_lat_lng_location_update,
-  leave_delivery_review,
+  leave_delivery_customer_review,
+  leave_delivery_carrier_review,
   get_user_delivering,
   get_user_deliverings_slim,
   get_user_deliverings_all_slim,
@@ -98,6 +99,8 @@ import { validatePhone } from '../utils/validators.utils';
 import { send_sms } from '../utils/sms-client.utils';
 import { STATUSES, STRIPE_ACTION_EVENTS, TRANSACTION_STATUS } from '../enums/common.enum';
 import { AwsS3Service } from 'src/utils/s3.utils';
+import { get_user_new_listings_alerts_by_where } from 'src/repos/users.repo';
+import { LOGGER } from 'src/utils/logger.utils';
 
 
 
@@ -107,8 +110,8 @@ enum DeliveryInsuranceAmounts {
   MAY_2023 = 10,
 }
 
-enum DeliveryInsuranceCoverageAmounts {
-  MAY_2023 = 500,
+enum DeliveryUrgentAmounts {
+  JUNE_2023 = 5,
 }
 
 
@@ -686,7 +689,7 @@ export class DeliveriesService {
         await UsersService.is_subscription_active(you)
       ).info.data as boolean;
       const chargeFeeData = StripeService.add_on_stripe_processing_fee(
-        createObj.payout + (options.insured ? DeliveryInsuranceAmounts.MAY_2023 : 0),
+        createObj.payout + (options.insured ? DeliveryInsuranceAmounts.MAY_2023 : 0) + (createObj.urgent ? DeliveryUrgentAmounts.JUNE_2023 : 0),
         is_subscription_active,
       );
 
@@ -754,8 +757,10 @@ export class DeliveriesService {
             delivery_id: new_delivery_model.id,
             delivery_payout: new_delivery_model.payout,
             insured_amount: (options.insured ? DeliveryInsuranceAmounts.MAY_2023 : 0),
+            urgent_amount: (createObj.urgent ? DeliveryUrgentAmounts.JUNE_2023 : 0),
             was_subscribed: is_subscription_active ? 'true' : 'false',
             insured: (!!options.insured).toString(),
+            urgent: (createObj.urgent).toString(),
             timestamp: Date.now(),
           },
         },
@@ -779,6 +784,26 @@ export class DeliveriesService {
           // charge_action: charge_action.toJSON(),
         },
       );
+
+      // if urgent, sent out notification now
+      if (createObj.urgent) {
+        get_user_new_listings_alerts_by_where({
+          from_city: createObj.from_city,
+          from_state: createObj.from_state,
+          to_city: createObj.to_city,
+          to_state: createObj.to_state,
+        })
+        .then((alerts) => {
+          alerts.forEach((alert) => {
+            const pushMessageObj = {
+              user_id: alert.user_id,
+              message: `New URGENT delivery listing were created from ${alert.from_city}, ${alert.from_state} going to ${alert.to_city}, ${alert.to_state}. Log in and claim this jobs!`,
+            };
+            LOGGER.info(`pushing alert:`, { pushMessageObj });
+            ExpoPushNotificationsService.sendUserPushNotification(pushMessageObj);
+          });
+        });
+      }
 
       // return delivery object
       const serviceMethodResults: ServiceMethodResults = {
@@ -2699,18 +2724,20 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await AwsS3Service.uploadFile(image, {
-      treatNotFoundAsError: false,
-      mutateObj: createObj,
-      validateAsImage: true,
-      id_prop: 'image_id',
-      link_prop: 'image_link',
-    });
-    if (imageValidation.error) {
-      return imageValidation;
+    if (image) {
+      const imageValidation = await AwsS3Service.uploadFile(image, {
+        treatNotFoundAsError: true,
+        mutateObj: createObj,
+        validateAsImage: true,
+        id_prop: 'image_id',
+        link_prop: 'image_link',
+      });
+      if (imageValidation.error) {
+        return imageValidation;
+      }
     }
 
-    const new_review = await leave_delivery_review(createObj);
+    const new_review = await leave_delivery_customer_review(createObj);
 
     create_notification_and_send({
       from_id: you.id,
@@ -2739,7 +2766,7 @@ export class DeliveriesService {
       status: HttpStatusCode.OK,
       error: false,
       info: {
-        message: `Review created!`,
+        message: `Rating created!`,
         data: new_review,
       },
     };
@@ -2772,18 +2799,20 @@ export class DeliveriesService {
       return dataValidation;
     }
 
-    const imageValidation = await AwsS3Service.uploadFile(image, {
-      treatNotFoundAsError: false,
-      mutateObj: createObj,
-      validateAsImage: true,
-      id_prop: 'image_id',
-      link_prop: 'image_link',
-    });
-    if (imageValidation.error) {
-      return imageValidation;
+    if (image) {
+      const imageValidation = await AwsS3Service.uploadFile(image, {
+        treatNotFoundAsError: true,
+        mutateObj: createObj,
+        validateAsImage: true,
+        id_prop: 'image_id',
+        link_prop: 'image_link',
+      });
+      if (imageValidation.error) {
+        return imageValidation;
+      }
     }
 
-    const new_review = await leave_delivery_review(createObj);
+    const new_review = await leave_delivery_carrier_review(createObj);
 
     create_notification_and_send({
       from_id: you.id,
@@ -2813,7 +2842,7 @@ export class DeliveriesService {
       status: HttpStatusCode.OK,
       error: false,
       info: {
-        message: `Review created!`,
+        message: `Rating created!`,
         data: new_review,
       },
     };

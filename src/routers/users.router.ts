@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { UserExists, UserIdsAreDifferent, YouAuthorized, YouAuthorizedSlim } from '../guards/you.guard';
-import { DeliveryExists, IsDeliveryCarrier } from '../guards/delivery.guard';
+import { DeliveryExists, DeliveryHasNoCarrierAssigned, IsDeliveryCarrier } from '../guards/delivery.guard';
 import { DeliveriesRequestHandler } from '../handlers/deliveries.handler';
 import { UsersRequestHandler } from '../handlers/users.handler';
 import { MessagingsRequestHandler } from '../handlers/messagings.handler';
@@ -51,6 +51,11 @@ UsersRouter.get('/:user_id/get-subscription-info', UserExists, UsersRequestHandl
 UsersRouter.get('/:id', UsersRequestHandler.get_user_by_id);
 
 
+UsersRouter.get('/:you_id/listings-alerts/all', YouAuthorized, UsersRequestHandler.get_user_new_listings_alerts_all);
+UsersRouter.get('/:you_id/listings-alerts', YouAuthorized, UsersRequestHandler.get_user_new_listings_alerts);
+UsersRouter.get('/:you_id/listings-alerts/:listing_alert_id', YouAuthorized, UsersRequestHandler.get_user_new_listings_alerts);
+
+
 // POST
 UsersRouter.post('/', UsersRequestHandler.sign_up);
 UsersRouter.post('/password-reset', UsersRequestHandler.submit_reset_password_request);
@@ -62,6 +67,7 @@ UsersRouter.post('/:you_id/send-message/:user_id', YouAuthorized, UserIdsAreDiff
 UsersRouter.post('/:you_id/customer-cards-payment-methods/:payment_method_id', YouAuthorized, UsersRequestHandler.add_card_payment_method_to_user_customer);
 UsersRouter.post('/:you_id/create-subscription/:payment_method_id', YouAuthorized, UsersRequestHandler.create_subscription);
 UsersRouter.post('/:you_id/cancel-subscription', YouAuthorized, UsersRequestHandler.cancel_subscription);
+UsersRouter.post('/:you_id/listings-alerts', YouAuthorized, UsersRequestHandler.create_user_new_listings_alert);
 
 // PUT
 UsersRouter.put('/', UsersRequestHandler.sign_in);
@@ -81,6 +87,8 @@ UsersRouter.put('/:you_id/verify-customer-has-cards', YouAuthorized, UsersReques
 UsersRouter.delete('/:you_id/customer-cards-payment-methods/:payment_method_id', YouAuthorized, UsersRequestHandler.remove_card_payment_method_to_user_customer);
 
 UsersRouter.delete('/:you_id/remove-expo-push-token/:expo_token', YouAuthorized, UsersRequestHandler.remove_expo_device_and_push_token);
+
+UsersRouter.delete('/:you_id/listings-alerts/:listing_alert_id', YouAuthorized, UsersRequestHandler.delete_user_new_listings_alert);
 
 
 
@@ -111,12 +119,12 @@ UsersRouter.get('/:you_id/settings', YouAuthorized, DeliveriesRequestHandler.get
 
 UsersRouter.post('/:you_id/settings', YouAuthorized, DeliveriesRequestHandler.update_settings);
 
-UsersRouter.post('/:you_id/assign-delivery/:delivery_id', YouAuthorized, DeliveryExists, DeliveriesRequestHandler.assign_delivery);
-UsersRouter.post('/:you_id/unassign-delivery/:delivery_id', YouAuthorized, DeliveryExists, DeliveriesRequestHandler.unassign_delivery);
-UsersRouter.post('/:you_id/mark-delivery-as-picked-up/:delivery_id', YouAuthorized, DeliveryExists, DeliveriesRequestHandler.mark_delivery_as_picked_up);
-UsersRouter.post('/:you_id/mark-delivery-as-dropped-off/:delivery_id', YouAuthorized, DeliveryExists, DeliveriesRequestHandler.mark_delivery_as_dropped_off);
-UsersRouter.post('/:you_id/mark-delivery-as-returned/:delivery_id', YouAuthorized, DeliveryExists, DeliveriesRequestHandler.mark_delivery_as_returned);
-UsersRouter.post('/:you_id/create-tracking-update/:delivery_id', YouAuthorized, DeliveryExists, DeliveriesRequestHandler.create_tracking_update);
+UsersRouter.post('/:you_id/assign-delivery/:delivery_id', YouAuthorized, DeliveryExists, DeliveryHasNoCarrierAssigned, DeliveriesRequestHandler.assign_delivery);
+UsersRouter.post('/:you_id/unassign-delivery/:delivery_id', YouAuthorized, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.unassign_delivery);
+UsersRouter.post('/:you_id/mark-delivery-as-picked-up/:delivery_id', YouAuthorized, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.mark_delivery_as_picked_up);
+UsersRouter.post('/:you_id/mark-delivery-as-dropped-off/:delivery_id', YouAuthorized, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.mark_delivery_as_dropped_off);
+UsersRouter.post('/:you_id/mark-delivery-as-returned/:delivery_id', YouAuthorized, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.mark_delivery_as_returned);
+UsersRouter.post('/:you_id/create-tracking-update/:delivery_id', YouAuthorized, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.create_tracking_update);
 UsersRouter.post('/:you_id/add-delivered-picture/:delivery_id', YouAuthorized, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.add_delivered_picture); 
 
 UsersRouter.post('/:you_id/add-from-person-id-picture/:delivery_id', YouAuthorized, DeliveryExists, IsDeliveryCarrier, DeliveriesRequestHandler.add_from_person_id_picture); 

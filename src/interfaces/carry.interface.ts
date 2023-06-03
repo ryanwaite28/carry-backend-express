@@ -110,6 +110,19 @@ export interface IUser extends ICommonModel {
   expo_devices?: IUserExpoDevice[],
 }
 
+export interface IUserNewListingsAlert {
+  id: number,
+  user_id: number,
+  label: string
+  to_city: string,
+  to_state: string,
+  from_city: string,
+  from_state: string,
+  
+  date_created: string,
+  uuid: string,
+}
+
 export interface IUserNotificationsLastOpened extends ICommonModel {
   user_id:                             number,
   notifications_last_opened:           string,

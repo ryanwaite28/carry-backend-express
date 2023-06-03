@@ -2402,4 +2402,144 @@ export class UsersService {
     };
     return serviceMethodResults;
   }
+
+  static async get_user_new_listings_alerts_by_id(id: number) {
+    const results = await UserRepo.get_user_new_listings_alerts_by_id(id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results
+      }
+    };
+    return serviceMethodResults;
+  }
+
+  static async create_user_new_listings_alert(params: {
+    user_id: number,
+    label: string
+    to_city: string,
+    to_state: string,
+    from_city: string,
+    from_state: string,
+  }) {
+    // check if user already has an alert by given params
+    const check = await UserRepo.check_user_new_listings_alert(params);
+    if (check) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.BAD_REQUEST,
+        error: true,
+        info: {
+          message: `User already has alert by given params`
+        }
+      };
+      return serviceMethodResults;
+    }
+
+    const isValid = (
+      (!!params.from_city && !!params.from_state) ||
+      (!!params.to_city && !!params.to_state)
+    );
+
+    if (!isValid) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.BAD_REQUEST,
+        error: true,
+        info: {
+          message: `Must have pickup city and state, dropoff city and state or both`
+        }
+      };
+      return serviceMethodResults;
+    }
+
+    const new_alert = await UserRepo.create_user_new_listings_alert(params);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: new_alert
+      }
+    };
+    return serviceMethodResults;
+  }
+
+  static async delete_user_new_listings_alert(you_id: number, alert_id: number) {
+    const results = await UserRepo.get_user_new_listings_alerts_by_id(alert_id);
+    if (!results) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.NOT_FOUND,
+        error: true,
+        info: {
+          message: `No alert found`
+        }
+      };
+      return serviceMethodResults;
+    }
+    if (results.user_id !== you_id) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.BAD_REQUEST,
+        error: true,
+        info: {
+          message: `Alert does not belong to user`
+        }
+      };
+      return serviceMethodResults;
+    }
+
+    await UserRepo.delete_user_new_listings_alert(results.id);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        message: `Delete alert`
+      }
+    };
+    return serviceMethodResults;
+  }
+
+  static async check_user_new_listings_alert(params: {
+    user_id: number,
+    label: string
+    to_city: string,
+    to_state: string,
+    from_city: string,
+    from_state: string,
+  }) {
+    // check if user already has an alert by given params
+    const results = await UserRepo.check_user_new_listings_alert(params);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results
+      }
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_user_new_listings_alerts_all(user_id: number) {
+    const resultsList = await UserRepo.get_user_new_listings_alerts_all(user_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_user_new_listings_alerts(user_id: number, alert_id?: number) {
+    const resultsList = await UserRepo.get_user_new_listings_alerts(user_id, alert_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
 }
