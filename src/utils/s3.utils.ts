@@ -41,8 +41,6 @@ export class AwsS3Service {
     }
   ) {
     if (!file) {
-      LOGGER.error(`AwsS3Service.uploadFile - error: invalid file input...`);
-      
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
         error: options && options.hasOwnProperty('treatNotFoundAsError') ? options.treatNotFoundAsError : true,
@@ -50,6 +48,9 @@ export class AwsS3Service {
           message: `No argument found/given`
         }
       };
+      
+      const errMsg = `AwsS3Service.uploadFile - error: no file input...`;
+      options.treatNotFoundAsError ? LOGGER.error(errMsg, { options, serviceMethodResults }) : LOGGER.info(errMsg, { options, serviceMethodResults });
       return serviceMethodResults;
     }
 

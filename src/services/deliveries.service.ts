@@ -101,6 +101,8 @@ import { STATUSES, STRIPE_ACTION_EVENTS, TRANSACTION_STATUS } from '../enums/com
 import { AwsS3Service } from 'src/utils/s3.utils';
 import { get_user_new_listings_alerts_by_where } from 'src/repos/users.repo';
 import { LOGGER } from 'src/utils/logger.utils';
+import { sendAwsEmail, sendAwsInternalEmail } from 'src/utils/ses.aws.utils';
+import { HandlebarsEmailsService } from './emails.service';
 
 
 
@@ -3739,6 +3741,20 @@ export class DeliveriesService {
         data: { delivery_id },
       });
     });
+
+    // send internal email about new dispute
+    try {
+      sendAwsInternalEmail({
+        subject: HandlebarsEmailsService.INTERNAL.new_delivery_dispute.subject(new_dispute.title),
+        html: HandlebarsEmailsService.INTERNAL.new_delivery_dispute.template({ dispute: new_dispute }),
+      })
+      .catch((error) => {
+        LOGGER.error(`Could not send internal email...`, error);
+      });
+    }
+    catch (error) {
+      LOGGER.error(`Could not send internal email; something went wrong...`, error);
+    }
 
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,

@@ -51,4 +51,11 @@ export class HandlebarsEmailsService {
     },
   };
 
+  public static readonly INTERNAL = {
+    new_delivery_dispute: {
+      subject: (dispute_title: string) => `${AppEnvironment.APP_NAME.DISPLAY} - New Delivery Dispute Opened: ${dispute_title}`,
+      template: compile(get_html_file_as_string('internal', 'new_delivery_dispute.html')),
+    },
+  };
+
 }
