@@ -171,7 +171,18 @@ export const deliveryMasterIncludes: Includeable[] = [
         attributes: user_attrs_slim
       }
     ]
-  }
+  },
+  {
+    model: DeliveryUnpaidListings,
+    as: 'delivery_unpaid_listing',
+    include: [
+      {
+        model: Users,
+        as: `customer`,
+        attributes: user_attrs_slim,
+      }
+    ]
+  },
 ];
 
 
@@ -186,6 +197,10 @@ export const deliveryDisputeMasterIncludes: Includeable[] = [
     model: Users,
     as: `user`,
     attributes: user_attrs_slim,
+  },
+  {
+    model: Delivery,
+    as: `delivery`,
   },
   {
     model: CarryAdmins,
@@ -219,17 +234,7 @@ export const deliveryDisputeMasterIncludes: Includeable[] = [
   //     },
   //   ]
   // },
-  {
-    model: DeliveryUnpaidListings,
-    as: 'delivery_unpaid_listing',
-    include: [
-      {
-        model: Users,
-        as: `customer`,
-        attributes: user_attrs_slim,
-      }
-    ]
-  },
+  
   {
     model: DeliveryDisputeSettlementOffers,
     as: `delivery_dispute_settlement_offers`,
@@ -958,9 +963,10 @@ export function create_delivery_dispute(params: {
   creator_id: number,
   user_id: number,
   delivery_id: number,
+  status: string,
+
   title: string,
   details: string,
-  status: string,
   image_link?: string,
   image_id?: string,
   compensation: number,
@@ -1030,6 +1036,7 @@ export function create_delivery_dispute_settlement_offer(params: {
   creator_id: number,
   user_id: number,
   delivery_id: number,
+
   message: string,
   offer_amount: number,
   status: string,

@@ -1955,7 +1955,7 @@ export class UsersService {
       return serviceMethodResults;
     }
 
-    const check_registered = await UserRepo.get_user_expo_device_by_token(expo_token, );
+    const check_registered = await UserRepo.get_user_expo_device_by_token(expo_token);
     if (!check_registered) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.BAD_REQUEST,
@@ -1973,6 +1973,7 @@ export class UsersService {
     const removed = await UserRepo.remove_expo_device_from_user(
       expo_token,
     );
+    LOGGER.info(`Removed Expo Device from user:`, { you_id, expo_token });
 
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,

@@ -66,6 +66,37 @@ export async function IsDeliveryCarrier(
   return next();
 }
 
+export async function NoCustomerRating(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const delivery_model = <IDelivery> response.locals.delivery_model;
+  const hasCustomerRating: boolean = !!delivery_model.customer_rating;
+  if (hasCustomerRating) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Already rated`
+    });
+  }
+  return next();
+}
+
+export async function NoCarrierRating(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const delivery_model = <IDelivery> response.locals.delivery_model;
+  const hasCarrierRating: boolean = !!delivery_model.carrier_rating;
+  if (hasCarrierRating) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Already rated`
+    });
+  }
+  return next();
+}
+
+
 export async function IsDeliveryOwnerOrCarrier(
   request: Request,
   response: Response,

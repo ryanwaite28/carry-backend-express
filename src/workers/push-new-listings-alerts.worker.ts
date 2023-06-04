@@ -36,7 +36,7 @@ WHERE
 
 if (!isMainThread) {
   const hourMS = 1000 * 60 * 60 * 1;
-  const minutes20 = 1000 * 60 * 10;
+  const minutes20 = 1000 * 60 * 20;
   
   let runCount = 1;
   

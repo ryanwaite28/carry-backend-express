@@ -797,7 +797,7 @@ export class DeliveriesService {
           alerts.forEach((alert) => {
             const pushMessageObj = {
               user_id: alert.user_id,
-              message: `New URGENT delivery listing were created from ${alert.from_city}, ${alert.from_state} going to ${alert.to_city}, ${alert.to_state}. Log in and claim this jobs!`,
+              message: `New URGENT delivery listing was created from ${alert.from_city}, ${alert.from_state} going to ${alert.to_city}, ${alert.to_state}. Log in and claim this job!`,
             };
             LOGGER.info(`pushing alert:`, { pushMessageObj });
             ExpoPushNotificationsService.sendUserPushNotification(pushMessageObj);
@@ -4140,15 +4140,19 @@ export class DeliveriesService {
       status: TRANSACTION_STATUS.COMPLETED,
     });
 
+    const charge = await StripeService.stripe.charges.retrieve(payment_intent.latest_charge as string);
+    // const was_subscribed: boolean = payment_intent.metadata['was_subscribed'] === 'true' ? true : false;
+    // const chargeFeeData = StripeService.add_on_stripe_processing_fee(delivery.payout, was_subscribed);
+    console.log({ charge }, JSON.stringify({ charge }));
+
     // payment went throough successfully, transfer to recipient stripe account
     const transferAmount = settlement_offer.offer_amount * 100;
-    const charge_id = payment_intent['charges'].data[0].id;
     const transfer = await StripeService.stripe.transfers.create({
       description: `${process.env.APP_NAME} - dispute settlement for delivery: ${delivery.title}`,
       amount: transferAmount,
       currency: 'usd',
       destination: user.stripe_account_id,
-      source_transaction: charge_id,
+      source_transaction: charge.id,
 
       metadata: {
         delivery_id,
@@ -4177,6 +4181,7 @@ export class DeliveriesService {
       settlement_offer.id,
       DeliveryDisputeSettlementOfferStatus.ACCEPTED,
     );
+
     const to_phone =
       you.id === delivery.owner_id
         ? delivery.carrier?.deliverme_settings?.phone || delivery.carrier?.phone

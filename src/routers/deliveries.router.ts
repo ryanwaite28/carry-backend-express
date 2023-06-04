@@ -11,6 +11,8 @@ import {
   DeliveryHasNoCarrierAssigned,
   IsDeliveryOwnerOrCarrier,
   UserDoesNotHaveAnUnpaidListing,
+  NoCarrierRating,
+  NoCustomerRating,
 } from '../guards/delivery.guard';
 import {
   DeliveryDisputeExists,
@@ -22,7 +24,8 @@ import {
   DeliveryDisputeOpenSettlementNotExists,
   DeliveryDisputeStatusOpen,
   IsSettlementOfferCreator,
-  IsNotSettlementOfferCreator
+  IsNotSettlementOfferCreator,
+  SettlementStatusIsPending
 } from "../guards/delivery-dispute.guard";
 import { YouAuthorizedSlim, YouAuthorizedSlimWeak } from '../guards/you.guard';
 import { ValidateRequestBodyDto } from 'src/middlewares/class-transformer-validator.middleware';
@@ -63,8 +66,8 @@ DeliveriesRouter.post('/:delivery_id/carrier-self-pay', YouAuthorizedSlim, Deliv
 DeliveriesRouter.post('/:delivery_id/payment-success', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.payment_success);
 DeliveriesRouter.post('/:delivery_id/payment-cancel', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveriesRequestHandler.payment_cancel);
 
-DeliveriesRouter.post('/:delivery_id/ratings/customer', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryCarrier, DeliveriesRequestHandler.leave_delivery_owner_review);
-DeliveriesRouter.post('/:delivery_id/ratings/carrier', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryOwner, DeliveriesRequestHandler.leave_delivery_carrier_review);
+DeliveriesRouter.post('/:delivery_id/ratings/customer', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryCarrier, NoCustomerRating, DeliveriesRequestHandler.leave_delivery_owner_review);
+DeliveriesRouter.post('/:delivery_id/ratings/carrier', YouAuthorizedSlim, DeliveryExists, DeliveryIsCompleted, IsDeliveryOwner, NoCarrierRating, DeliveriesRequestHandler.leave_delivery_carrier_review);
 
 DeliveriesRouter.post('/:delivery_id/request-carrier-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveryNotCompleted, IsNotDeliveryCarrierLocationRequestCompleted, DeliveriesRequestHandler.request_carrier_location);
 DeliveriesRouter.post('/:delivery_id/cancel-request-carrier-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwner, DeliveryNotCompleted, DeliveriesRequestHandler.cancel_request_carrier_location);
@@ -78,9 +81,9 @@ DeliveriesRouter.post('/:delivery_id/create-delivery-dispute', YouAuthorizedSlim
 DeliveriesRouter.post('/:delivery_id/create-delivery-dispute-log', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveriesRequestHandler.create_delivery_dispute_log);
 DeliveriesRouter.post('/:delivery_id/create-delivery-dispute-customer-support-message', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveriesRequestHandler.create_delivery_dispute_customer_service_message);
 DeliveriesRouter.post('/:delivery_id/make-delivery-dispute-settlement-offer', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveryDisputeOpenSettlementNotExists, DeliveriesRequestHandler.make_delivery_dispute_settlement_offer);
-DeliveriesRouter.post('/:delivery_id/cancel-delivery-dispute-settlement-offer', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveryDisputeOpenSettlementExists, IsSettlementOfferCreator, DeliveriesRequestHandler.cancel_delivery_dispute_settlement_offer);
-DeliveriesRouter.post('/:delivery_id/accept-delivery-dispute-settlement-offer', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveryDisputeOpenSettlementExists, IsNotSettlementOfferCreator, DeliveriesRequestHandler.accept_delivery_dispute_settlement_offer);
-DeliveriesRouter.post('/:delivery_id/decline-delivery-dispute-settlement-offer', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveryDisputeOpenSettlementExists, IsNotSettlementOfferCreator, DeliveriesRequestHandler.decline_delivery_dispute_settlement_offer);
+DeliveriesRouter.post('/:delivery_id/cancel-delivery-dispute-settlement-offer', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveryDisputeOpenSettlementExists, IsSettlementOfferCreator, SettlementStatusIsPending, DeliveriesRequestHandler.cancel_delivery_dispute_settlement_offer);
+DeliveriesRouter.post('/:delivery_id/accept-delivery-dispute-settlement-offer', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveryDisputeOpenSettlementExists, IsNotSettlementOfferCreator, SettlementStatusIsPending, DeliveriesRequestHandler.accept_delivery_dispute_settlement_offer);
+DeliveriesRouter.post('/:delivery_id/decline-delivery-dispute-settlement-offer', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveryDisputeOpenSettlementExists, IsNotSettlementOfferCreator, SettlementStatusIsPending, DeliveriesRequestHandler.decline_delivery_dispute_settlement_offer);
 
 
 /** PUT */

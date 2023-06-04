@@ -616,9 +616,11 @@ export const DeliveryDisputeSettlementOffers = <MyModelStatic> sequelize.define(
   user_id:         { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
   agent_id:        { type: Sequelize.INTEGER, allowNull: true, references: { model: CarryAdmins, key: 'id' } },
   delivery_id:     { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
+  status:          { type: Sequelize.STRING, allowNull: false },
+  
   message:         { type: Sequelize.TEXT, allowNull: false, defaultValue: '' },
   offer_amount:    { type: Sequelize.INTEGER, allowNull: false },
-  status:          { type: Sequelize.STRING, allowNull: false },
+  
   date_created:    { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
   uuid:            { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
@@ -668,7 +670,7 @@ export const DeliveryUnpaidListings = <MyModelStatic> sequelize.define('carry_de
   uuid:                                { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
 
-DeliveryUnpaidListings.sync({ force: true });
+// DeliveryUnpaidListings.sync({ force: true });
 
 
 export const CarryUserProfileSettings = <MyModelStatic> sequelize.define('carry_user_profile_settings', {

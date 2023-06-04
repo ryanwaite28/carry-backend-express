@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { DeliveryDisputeStatus } from '../enums/carry.enum';
+import { DeliveryDisputeSettlementOfferStatus, DeliveryDisputeStatus } from '../enums/carry.enum';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { IUser } from '../interfaces/carry.interface';
 import { IDeliveryDispute, IDeliveryDisputeSettlementOffer } from '../interfaces/deliverme.interface';
@@ -154,6 +154,24 @@ export async function IsSettlementOfferCreator(
   if (!isCreator) {
     return response.status(HttpStatusCode.FORBIDDEN).json({
       message: `Cannot complete; Is not settlement creator`
+    });
+  }
+  
+  return next();
+}
+
+export async function SettlementStatusIsPending(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const settlement_offer_model: IDeliveryDisputeSettlementOffer = response.locals.settlement_offer_model;
+  const you: IUser = response.locals.you;
+  const isPending = settlement_offer_model.status === DeliveryDisputeSettlementOfferStatus.PENDING;
+
+  if (!isPending) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Offer no longer pending`
     });
   }
   

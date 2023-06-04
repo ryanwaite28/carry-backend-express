@@ -405,17 +405,17 @@ export const delivery_carrier_review_required_props: {
   {
     field: "rating",
     name: "Rating",
-    validator: (arg) => numberValidator(arg) && arg >= 1 && arg <= 5,
+    validator: (arg) => numberValidator(arg) && [1,2,3,4,5].includes(arg),
   },
   {
     field: "title",
     name: "Title",
-    validator: (arg: any) => genericTextValidator(arg),
+    validator: (arg: any) => !arg || genericTextValidator(arg),
   },
   {
     field: "summary",
     name: "Summary",
-    validator: (arg: any) => genericTextValidator(arg),
+    validator: (arg: any) => !arg || genericTextValidator(arg),
   },
 ];
 
@@ -745,7 +745,7 @@ export const populate_carry_notification_obj = async (
       const delivery: IDelivery | null = await get_delivery_by_id(
         notificationObj.target_id
       );
-      message = `${full_name} left an owner's review for your delivery: ${
+      message = `${full_name} left an owner's rating for your delivery: ${
         delivery!.title
       }`;
       mount_prop_key = "delivery";
@@ -759,7 +759,7 @@ export const populate_carry_notification_obj = async (
       const delivery: IDelivery | null = await get_delivery_by_id(
         notificationObj.target_id
       );
-      message = `${full_name} left a carrier's review for your delivery: ${
+      message = `${full_name} left a carrier's rating for your delivery: ${
         delivery!.title
       }`;
       mount_prop_key = "delivery";
