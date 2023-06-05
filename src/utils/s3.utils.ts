@@ -28,7 +28,9 @@ const s3Client = new S3Client({ region: REGION });
 export class AwsS3Service {
   static readonly s3Client = s3Client;
 
-  static readonly Bucket = AppEnvironment.AWS.S3.BUCKET;
+  static isS3ConventionId(id: string) {
+    return id.includes(`${AppEnvironment.AWS.S3.BUCKET}|`);
+  }
 
   static async uploadFile(
     file: string | UploadedFile | undefined,
@@ -85,7 +87,7 @@ export class AwsS3Service {
       }
   
       const Key = `static/uploads/${filename}`;
-      const Id = `${AppEnvironment.AWS.S3.BUCKET}|${Key}`;
+      const Id = `${AppEnvironment.AWS.S3.BUCKET}|${Key}`; // unique id ref for database storage; makes it easy to figure out the bucket and key for later usages/purposes.
       const Link = `${AppEnvironment.AWS.S3.SERVE_ORIGIN}/uploads/${filename}`;
   
       const Body: Buffer = readFileSync(filepath);

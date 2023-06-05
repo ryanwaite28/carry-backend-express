@@ -98,6 +98,16 @@ UsersRouter.delete('/:you_id/listings-alerts/:listing_alert_id', YouAuthorized, 
 
 UsersRouter.get('/:user_id/stats', UserExists, DeliveriesRequestHandler.get_user_stats);
 
+UsersRouter.get('/:user_id/get-customer-ratings/stats', UserExists, UsersRequestHandler.get_customer_ratings_stats);
+UsersRouter.get('/:user_id/get-customer-ratings/all', UserExists, UsersRequestHandler.get_customer_ratings_all);
+UsersRouter.get('/:user_id/get-customer-ratings', UserExists, UsersRequestHandler.get_customer_ratings);
+UsersRouter.get('/:user_id/get-customer-ratings/:rating_id', UserExists, UsersRequestHandler.get_customer_ratings);
+
+UsersRouter.get('/:user_id/get-carrier-ratings/stats', UserExists, UsersRequestHandler.get_carrier_ratings_stats);
+UsersRouter.get('/:user_id/get-carrier-ratings/all', UserExists, UsersRequestHandler.get_carrier_ratings_all);
+UsersRouter.get('/:user_id/get-carrier-ratings', UserExists, UsersRequestHandler.get_carrier_ratings);
+UsersRouter.get('/:user_id/get-carrier-ratings/:rating_id', UserExists, UsersRequestHandler.get_carrier_ratings);
+
 UsersRouter.get('/:user_id/get-deliveries/all', UserExists, DeliveriesRequestHandler.get_user_deliveries_all);
 UsersRouter.get('/:user_id/get-deliveries', UserExists, DeliveriesRequestHandler.get_user_deliveries);
 UsersRouter.get('/:user_id/get-deliveries/:delivery_id', UserExists, DeliveriesRequestHandler.get_user_deliveries);
@@ -115,6 +125,11 @@ UsersRouter.get('/:user_id/get-deliverings-slim', UserExists, DeliveriesRequestH
 UsersRouter.get('/:user_id/get-deliverings-slim/:delivery_id', UserExists, DeliveriesRequestHandler.get_user_deliverings_slim);
 
 UsersRouter.get('/:you_id/delivering', YouAuthorized, DeliveriesRequestHandler.get_user_delivering);
+
+UsersRouter.get('/:you_id/delivery-carrier-requests/all', YouAuthorized, DeliveriesRequestHandler.get_carrier_requests_all);
+UsersRouter.get('/:you_id/delivery-carrier-requests', YouAuthorized, DeliveriesRequestHandler.get_carrier_requests);
+UsersRouter.get('/:you_id/delivery-carrier-requests/:carrier_request_id', YouAuthorized, DeliveriesRequestHandler.get_carrier_requests);
+
 UsersRouter.get('/:you_id/settings', YouAuthorized, DeliveriesRequestHandler.get_settings);
 
 UsersRouter.post('/:you_id/settings', YouAuthorized, DeliveriesRequestHandler.update_settings);

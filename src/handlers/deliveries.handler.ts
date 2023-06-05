@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { ExpressResponse, ServiceMethodResults } from '../interfaces/common.interface';
 import { IUser } from '../interfaces/carry.interface';
-import { IDelivery, IDeliveryDispute, IDeliveryDisputeSettlementOffer } from '../interfaces/deliverme.interface';
+import { IDelivery, IDeliveryCarrierRequest, IDeliveryDispute, IDeliveryDisputeSettlementOffer } from '../interfaces/deliverme.interface';
 import { DeliveriesService } from '../services/deliveries.service';
 // import { UploadedFile } from 'express-fileupload';
 
@@ -557,7 +557,75 @@ export class DeliveriesRequestHandler {
       carrier_latest_lat: request.body.lat as number,
       carrier_latest_lng: request.body.lng as number,
     };
-    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.carrier_unshare_location(options);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.carrier_update_location(options);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+
+  static async get_carrier_delivery_requests_all(request: Request, response: Response): ExpressResponse {
+    const delivery_id: number = parseInt(request.params.delivery_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_carrier_delivery_requests_all(delivery_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async get_carrier_delivery_requests(request: Request, response: Response): ExpressResponse {
+    const delivery_id: number = parseInt(request.params.delivery_id, 10);
+    const carrier_request_id: number | undefined = !request.params.carrier_request_id ? undefined : parseInt(request.params.carrier_request_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_carrier_delivery_requests(delivery_id, carrier_request_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async check_carrier_delivery_request(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const delivery_id: number = parseInt(request.params.delivery_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.check_carrier_delivery_request(delivery_id, user_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async check_carrier_delivery_request_pending(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const delivery_id: number = parseInt(request.params.delivery_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.check_carrier_delivery_request_pending(delivery_id, user_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async create_carrier_delivery_request(request: Request, response: Response): ExpressResponse {
+    const you_id = response.locals.you.id;
+    const delivery_id: number = parseInt(request.params.delivery_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.create_carrier_delivery_request(delivery_id, you_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+  
+  static async cancel_carrier_delivery_request(request: Request, response: Response): ExpressResponse {
+    const you_id = response.locals.you.id;
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.cancel_carrier_delivery_request(response.locals.delivery_carrier_request, you_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async accept_carrier_delivery_request(request: Request, response: Response): ExpressResponse {
+    const you_id = response.locals.you.id;
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.accept_carrier_delivery_request(response.locals.delivery_carrier_request, you_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async decline_carrier_delivery_request(request: Request, response: Response): ExpressResponse {
+    const you_id = response.locals.you.id;
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.decline_carrier_delivery_request(response.locals.delivery_carrier_request, you_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+
+
+  static async get_carrier_requests_all(request: Request, response: Response): ExpressResponse {
+    const you_id = response.locals.you.id;
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_carrier_requests_all(you_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  static async get_carrier_requests(request: Request, response: Response): ExpressResponse {
+    const you_id = response.locals.you.id;
+    const carrier_request_id: number | undefined = request.params.carrier_request_id ? parseInt(request.params.carrier_request_id, 10) : undefined;
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_carrier_requests(you_id, carrier_request_id);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
 }

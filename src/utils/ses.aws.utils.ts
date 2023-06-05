@@ -11,8 +11,9 @@ export function sendAwsEmail(params: {
   subject: string,
   message?: string,
   html?: string,
+  forceInLocal?: boolean
 }) {
-  if (isLocal) {
+  if (!params.forceInLocal && isLocal) {
     LOGGER.info(`Is local, not sending email...`, { isLocal, params });
     return Promise.resolve();
   }
@@ -51,15 +52,16 @@ export function sendAwsInternalEmail(params: {
   subject: string,
   message?: string,
   html?: string,
+  forceInLocal?: boolean,
 }) {
-  // if (isLocal) {
-  //   LOGGER.info(`Is local, not sending email...`, { isLocal, params });
-  //   return Promise.resolve();
-  // }
+  if (!params.forceInLocal && isLocal) {
+    LOGGER.info(`Is local, not sending email...`, { isLocal, params });
+    return Promise.resolve();
+  }
   const sendCommandParams: SendEmailCommandInput = {
-    Source: AppEnvironment.AWS.SES.EMAIL_INTERNAL,
+    Source: AppEnvironment.AWS.SES.EMAIL_INTERNAL_SENDER,
     Destination: {
-      ToAddresses: [AppEnvironment.AWS.SES.EMAIL_INTERNAL]
+      ToAddresses: [AppEnvironment.AWS.SES.EMAIL_INTERNAL_RECEIVER]
     },
     Message: {
       Subject: {
@@ -72,7 +74,7 @@ export function sendAwsInternalEmail(params: {
         : { Text: { Data: params.message, Charset: `utf-8` } }
     },
     ReplyToAddresses: [],
-    SourceArn: AppEnvironment.AWS.SES.ARN
+    SourceArn: AppEnvironment.AWS.SES.ARN_INTERNAL
   };
   LOGGER.info(`Sending email via AWS SES:`, { params, sendCommandParams });
   const command = new SendEmailCommand(sendCommandParams);

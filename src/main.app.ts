@@ -60,6 +60,7 @@ import { AppEnvironment } from './utils/app.enviornment';
 import moment from 'moment';
 import { QueryTypes } from 'sequelize';
 import { startPushNewListingsAlertsNotificationsIntervalJob } from './workers/master.worker';
+import { sendAwsInternalEmail } from './utils/ses.aws.utils';
 
 
 
@@ -155,6 +156,12 @@ try {
     startPushNewListingsAlertsNotificationsIntervalJob().subscribe({
       next: () => {}
     });
+
+    // sendAwsInternalEmail({
+    //   // forceInLocal: true,
+    //   subject: `test subject`,
+    //   message: `test message`
+    // });
 
   });  
 } 

@@ -4,6 +4,7 @@ import { IUser } from '../interfaces/carry.interface';
 import { ExpressResponse, ServiceMethodResults, PlainObject } from '../interfaces/common.interface';
 import { UsersService } from '../services/users.service';
 import { ApplyToAllMethods, CatchRequestHandlerError, MethodLogger } from '../decorators/service-method-error-handler.decorator';
+import { DeliveriesService } from 'src/services/deliveries.service';
 
 
 
@@ -376,6 +377,50 @@ export class UsersRequestHandler {
     const listing_alert_id: number = parseInt(request.params.listing_alert_id, 10);
 
     const serviceMethodResults: ServiceMethodResults = await UsersService.delete_user_new_listings_alert(you.id, listing_alert_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async get_customer_ratings_stats(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_customer_ratings_stats(user_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async get_customer_ratings_all(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_customer_ratings_all(user_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async get_customer_ratings(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const rating_id: number | undefined = !request.params.rating_id ? undefined : parseInt(request.params.rating_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_customer_ratings(user_id, rating_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async get_carrier_ratings_stats(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_carrier_ratings_stats(user_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+  
+  @CatchRequestHandlerError()
+  static async get_carrier_ratings_all(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_carrier_ratings_all(user_id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
+  @CatchRequestHandlerError()
+  static async get_carrier_ratings(request: Request, response: Response): ExpressResponse {
+    const user_id: number = parseInt(request.params.user_id, 10);
+    const rating_id: number | undefined = !request.params.rating_id ? undefined : parseInt(request.params.rating_id, 10);
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.get_carrier_ratings(user_id, rating_id);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
 }

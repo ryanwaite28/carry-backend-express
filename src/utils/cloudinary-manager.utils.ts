@@ -1,5 +1,8 @@
 import { UploadedFile } from "express-fileupload";
 import { uniqueValue } from "./helpers.utils";
+import { AwsS3Service } from "./s3.utils";
+import { LOGGER } from "./logger.utils";
+import { AppEnvironment } from "./app.enviornment";
 
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
@@ -94,18 +97,38 @@ export function delete_cloudinary_image (public_id: string) {
     console.log('deleting cloud image with public_id:', public_id);
     cloudinary.uploader.destroy(public_id, (error: any, result: any) => {
       if (error) {
-        console.log('error deleting...', error);
+        LOGGER.error('error deleting...', error);
         return reject(error);
       } else {
-        console.log(
-          'deleted from cloudinary successfully!',
-          'public_id: ' + public_id,
-          'result: ', result
+        LOGGER.info(
+          `deleted from cloudinary successfully!`,
+          { public_id, result }
         );
         return resolve(null);
       }
     });
   });
+}
+
+export function delete_s3_image (key_id: string) {
+  const splitter = key_id.split('|');
+  const Bucket = splitter[0];
+  const Key = splitter[1];
+  return AwsS3Service.deleteObject({ Bucket, Key }).then((error) => {
+    LOGGER.error(`Could not delete S3 object...`, { key_id });
+  });
+}
+
+export function delete_cloud_image(id: string) {
+  if (AwsS3Service.isS3ConventionId(id)) {
+    // is s3 object
+    return delete_s3_image(id);
+  }
+  else {
+    // must be cloudinary image
+    delete_cloudinary_image(id);
+    return 
+  }
 }
 
 // export const delete_cloudinary_image = delete_cloudinary_image;

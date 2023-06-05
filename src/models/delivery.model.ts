@@ -545,11 +545,12 @@ export const DeliveryPenaltyAttempts = <MyModelStatic> sequelize.define('carry_d
   uuid:                        { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
 
-export const DeliveryRequests = <MyModelStatic> sequelize.define('carry_delivery_requests', {
+export const DeliveryCarrierRequests = <MyModelStatic> sequelize.define('carry_delivery_carrier_requests', {
   id:              { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
   user_id:         { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
   delivery_id:     { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
   message:         { type: Sequelize.STRING, allowNull: true },
+  status:          { type: Sequelize.STRING, allowNull: false },
   date_created:    { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
   uuid:            { type: Sequelize.STRING, unique: true, defaultValue: Sequelize.UUIDV1 }
 }, common_options);
@@ -820,6 +821,11 @@ Delivery.belongsTo(Users, { as: 'owner', foreignKey: 'owner_id', targetKey: 'id'
 Users.hasMany(Delivery, { as: 'carry_deliverings', foreignKey: 'carrier_id', sourceKey: 'id' });
 Delivery.belongsTo(Users, { as: 'carrier', foreignKey: 'carrier_id', targetKey: 'id' });
 
+Users.hasMany(DeliveryCarrierRequests, { as: 'carry_carrier_requests', foreignKey: 'user_id', sourceKey: 'id' });
+DeliveryCarrierRequests.belongsTo(Users, { as: 'carrier', foreignKey: 'user_id', targetKey: 'id' });
+Delivery.hasMany(DeliveryCarrierRequests, { as: 'carrier_requests', foreignKey: 'delivery_id', sourceKey: 'id' });
+DeliveryCarrierRequests.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
+
 Delivery.hasMany(DeliveryTrackingUpdates, { as: 'deliverme_delivery_tracking_updates', foreignKey: 'delivery_id', sourceKey: 'id' });
 DeliveryTrackingUpdates.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
 Users.hasMany(DeliveryTrackingUpdates, { as: 'deliverme_user_tracking_updates', foreignKey: 'user_id', sourceKey: 'id' });
@@ -840,7 +846,7 @@ DeliveryMessages.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id'
 Delivery.hasMany(DeliveryCarrierTrackLocationRequests, { as: 'delivery_carrier_track_location_requests', foreignKey: 'delivery_id', sourceKey: 'id' });
 DeliveryCarrierTrackLocationRequests.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
 
-Delivery.hasMany(DeliveryCarrierTrackLocationUpdates, { as: 'delivery_carrier_track_location_updates', foreignKey: 'delivery_id', sourceKey: 'id' });
+Delivery.hasMany(DeliveryCarrierTrackLocationUpdates, { as: 'carrier_location_updates', foreignKey: 'delivery_id', sourceKey: 'id' });
 DeliveryCarrierTrackLocationUpdates.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
 
 Delivery.hasOne(DeliveryDisputes, { as: 'delivery_dispute', foreignKey: 'delivery_id', sourceKey: 'id' });

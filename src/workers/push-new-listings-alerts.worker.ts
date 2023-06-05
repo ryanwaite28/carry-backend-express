@@ -1,4 +1,5 @@
 import { isMainThread, parentPort } from 'worker_threads';
+
 import moment from 'moment';
 import { sequelizeInst } from 'src/models/_def.model';
 import { QueryTypes } from 'sequelize';
@@ -15,7 +16,8 @@ SELECT
   carry_user_new_listings_alerts.user_id, carry_user_new_listings_alerts.label, 
   carry_deliveries.to_city, carry_deliveries.to_state, 
   carry_deliveries.from_city, carry_deliveries.from_state,            
-  carry_users.firstname, carry_users.lastname         
+  carry_users.firstname, carry_users.lastname,
+  Count(*) as new_deliveries   
 FROM
   carry_user_new_listings_alerts
 JOIN
@@ -31,6 +33,11 @@ ON
   carry_user_new_listings_alerts.user_id = carry_users.id
 WHERE
   carry_deliveries.created_at >= :date
+GROUP BY
+  carry_user_new_listings_alerts.user_id, carry_user_new_listings_alerts.label, 
+  carry_deliveries.to_city, carry_deliveries.to_state, 
+  carry_deliveries.from_city, carry_deliveries.from_state,            
+  carry_users.firstname, carry_users.lastname
 `;
 
 
@@ -55,7 +62,7 @@ if (!isMainThread) {
     const useQueryFormatted = useQuery.replace(/[\n\s\t]+/g, ' ');
 
     const results: any[] = await sequelizeInst.query(useQueryFormatted, { replacements: { date: past20MinutesAgo }, type: QueryTypes.SELECT });
-    parentPort.postMessage(`results for alerts to push: ${results.length}`);
+    parentPort.postMessage({ message: `results for alerts to push: ${results.length}`, results });
 
     for (const alert of results) {
       const pushMessageObj = {

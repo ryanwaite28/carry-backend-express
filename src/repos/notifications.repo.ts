@@ -15,6 +15,7 @@ import { validatePhone } from '../utils/validators.utils';
 import { Notifications } from '../models/delivery.model';
 import { CommonSocketEventsHandler } from '../services/common.socket-event-handler';
 import { populate_carry_notification_obj } from '../utils/carry.chamber';
+import { ExpoPushNotificationsService } from 'src/services/expo-notifications.service';
 
 
 export async function create_notification(
@@ -38,6 +39,7 @@ export async function create_notification_and_send(
     target_type: string;
     target_id: number;
     to_phone?: string,
+    send_mobile_push: boolean,
     extras_data?: PlainObject,
   }
 ) {
@@ -47,7 +49,8 @@ export async function create_notification_and_send(
     event: params.event,
     target_type: params.target_type,
     target_id: params.target_id,
-  }).then(async (notification_model) => {
+  })
+  .then(async (notification_model) => {
     const notification = await populate_carry_notification_obj(notification_model);
 
     const event_data: any = {
@@ -75,6 +78,13 @@ export async function create_notification_and_send(
       send_sms({
         to_phone_number: params.to_phone,
         message: notification.message,
+      });
+    }
+
+    if (params.send_mobile_push) {
+      ExpoPushNotificationsService.sendUserPushNotification({
+        user_id: notification.to_id,
+        message: notification.message!,
       });
     }
 

@@ -9,6 +9,7 @@ import {
   ICreateDeliveryProps,
   ICreateDeliveryTrackingUpdateProps,
   IDelivery,
+  IDeliveryCarrierRequest,
   IDeliveryDispute,
   IDeliveryDisputeSettlementOffer,
 } from '../interfaces/deliverme.interface';
@@ -61,6 +62,21 @@ import {
   create_delivery_dispute_customer_service_message,
   get_user_dispute_messages_by_user_id_and_dispute_id,
   update_delivery_dispute,
+  check_carrier_delivery_request,
+  create_carrier_delivery_request,
+  get_delivery_owner_by_delivery_id,
+  get_carrier_delivery_requests_all,
+  check_carrier_delivery_request_pending,
+  update_carrier_delivery_request_status,
+  get_carrier_requests_all,
+  get_carrier_requests,
+  get_carrier_delivery_requests,
+  get_customer_ratings_stats,
+  get_carrier_ratings_stats,
+  get_customer_ratings_all,
+  get_customer_ratings,
+  get_carrier_ratings_all,
+  get_carrier_ratings,
 } from '../repos/deliveries.repo';
 import {
   create_notification,
@@ -566,6 +582,30 @@ export class DeliveriesService {
     return serviceMethodResults;
   }
 
+  static async get_carrier_requests_all(user_id: number) {
+    const resultsList = await get_carrier_requests_all(user_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_carrier_requests(user_id: number, carrier_request_id?: number) {
+    const resultsList = await get_carrier_requests(user_id, carrier_request_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
+
   static async get_user_deliveries_all_slim(user_id: number) {
     const resultsList = await get_user_deliveries_slim(user_id);
     const serviceMethodResults: ServiceMethodResults = {
@@ -902,7 +942,8 @@ export class DeliveriesService {
         },
       };
       return serviceMethodResults;
-    } catch (e) {
+    }
+    catch (e) {
       const serviceMethodResults: ServiceMethodResults = {
         status: HttpStatusCode.INTERNAL_SERVER_ERROR,
         error: true,
@@ -1146,8 +1187,7 @@ export class DeliveriesService {
       return serviceMethodResults;
     }
 
-    const delivering_inprogress_count =
-      await get_user_delivering_inprogress_count(you.id);
+    const delivering_inprogress_count = await get_user_delivering_inprogress_count(you.id);
 
     if (delivering_inprogress_count === 3) {
       const serviceMethodResults: ServiceMethodResults = {
@@ -2749,6 +2789,7 @@ export class DeliveriesService {
       target_id: delivery.id,
 
       to_phone: delivery.owner?.deliverme_settings?.phone || delivery.owner?.phone,
+      send_mobile_push: true,
 
       extras_data: {
         delivery_id: delivery.id,
@@ -2756,12 +2797,6 @@ export class DeliveriesService {
         user_id: you.id,
         user: delivery.carrier,
       },
-    }).then((notification: INotification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: { delivery_id: delivery.id },
-      });
     });
 
     const serviceMethodResults: ServiceMethodResults = {
@@ -2823,8 +2858,8 @@ export class DeliveriesService {
       target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
       target_id: delivery.id,
 
-      to_phone:
-        delivery.carrier?.deliverme_settings?.phone || delivery.carrier?.phone,
+      to_phone: delivery.carrier?.deliverme_settings?.phone || delivery.carrier?.phone,
+      send_mobile_push: true,
 
       extras_data: {
         delivery_id: delivery.id,
@@ -2832,12 +2867,6 @@ export class DeliveriesService {
         user_id: you.id,
         user: delivery.owner,
       },
-    }).then((notification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: { delivery_id: delivery.id },
-      });
     });
 
     const serviceMethodResults: ServiceMethodResults = {
@@ -3639,32 +3668,17 @@ export class DeliveriesService {
       carrier_latest_lng: options.carrier_latest_lng,
     });
 
-    const new_tracking_location_update =
-      await create_delivery_carrier_lat_lng_location_update({
-        delivery_id: options.delivery.id,
-        lat: options.carrier_latest_lat,
-        lng: options.carrier_latest_lng,
-      });
-
-    CommonSocketEventsHandler.emitEventToUserSockets({
-      user_id: options.delivery.owner_id,
-      event: CARRY_EVENT_TYPES.CARRIER_LOCATION_UPDATED,
-      event_data: {
-        data: {
-          delivery_id: options.delivery.id,
-          updates,
-          new_tracking_location_update,
-        },
-        message: `Carrier location updated!`,
-        user: options.you,
-      },
+    const new_tracking_location_update = await create_delivery_carrier_lat_lng_location_update({
+      delivery_id: options.delivery.id,
+      lat: options.carrier_latest_lat,
+      lng: options.carrier_latest_lng,
     });
 
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,
       error: false,
       info: {
-        message: `Carrier location unshared`,
+        message: `Carrier location recorded`,
         data: new_tracking_location_update,
       },
     };
@@ -3727,19 +3741,13 @@ export class DeliveriesService {
       target_id: delivery.id,
 
       to_phone,
-
+      send_mobile_push: true,
       extras_data: {
         delivery_id: delivery.id,
         data: new_dispute,
         user_id: you.id,
         user: delivery.owner,
       },
-    }).then((notification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: { delivery_id },
-      });
     });
 
     // send internal email about new dispute
@@ -3824,6 +3832,7 @@ export class DeliveriesService {
       target_id: delivery_dispute.id,
 
       to_phone,
+      send_mobile_push: true,
 
       extras_data: {
         delivery_id: delivery.id,
@@ -3832,12 +3841,6 @@ export class DeliveriesService {
         user_id: you.id,
         user: delivery.owner,
       },
-    }).then((notification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: { delivery_id },
-      });
     });
 
     const serviceMethodResults: ServiceMethodResults = {
@@ -3905,6 +3908,7 @@ export class DeliveriesService {
 
     //
     //   to_phone,
+    //   send_mobile_push: true,
 
     //   extras_data: {
     //     delivery_id: delivery.id,
@@ -3913,12 +3917,6 @@ export class DeliveriesService {
     //     user_id: you.id,
     //     user: delivery.owner,
     //   },
-    // }).then((notification) => {
-    //   ExpoPushNotificationsService.sendUserPushNotification({
-    //     user_id: notification.to_id,
-    //     message: notification.message!,
-    //     data: { delivery_id }
-    //   });
     // });
 
     const serviceMethodResults: ServiceMethodResults = {
@@ -3978,6 +3976,7 @@ export class DeliveriesService {
       target_id: delivery_dispute.id,
 
       to_phone,
+      send_mobile_push: true,
 
       extras_data: {
         delivery_id: delivery.id,
@@ -3986,12 +3985,6 @@ export class DeliveriesService {
         user_id: you.id,
         user: delivery.owner,
       },
-    }).then((notification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: { delivery_id },
-      });
     });
 
     const serviceMethodResults: ServiceMethodResults = {
@@ -4036,6 +4029,7 @@ export class DeliveriesService {
       target_id: delivery_dispute.id,
 
       to_phone,
+      send_mobile_push: true,
 
       extras_data: {
         delivery_id: delivery.id,
@@ -4044,12 +4038,6 @@ export class DeliveriesService {
         user_id: you.id,
         user: delivery.owner,
       },
-    }).then((notification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: { delivery_id, dispute_id: delivery_dispute.id },
-      });
     });
 
     const serviceMethodResults: ServiceMethodResults = {
@@ -4228,6 +4216,7 @@ export class DeliveriesService {
       target_id: delivery_dispute.id,
 
       to_phone,
+      send_mobile_push: true,
 
       extras_data: {
         delivery_id: delivery.id,
@@ -4237,16 +4226,6 @@ export class DeliveriesService {
         user_id: you.id,
         user: delivery.owner,
       },
-    }).then((notification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: {
-          settlement_offer_id: settlement_offer.id,
-          delivery_id,
-          dispute_id: delivery_dispute.id,
-        },
-      });
     });
 
     // return response
@@ -4292,6 +4271,7 @@ export class DeliveriesService {
       target_id: delivery_dispute.id,
 
       to_phone,
+      send_mobile_push: true,
 
       extras_data: {
         delivery_id: delivery.id,
@@ -4300,12 +4280,6 @@ export class DeliveriesService {
         user_id: you.id,
         user: delivery.owner,
       },
-    }).then((notification) => {
-      ExpoPushNotificationsService.sendUserPushNotification({
-        user_id: notification.to_id,
-        message: notification.message!,
-        data: { delivery_id, dispute_id: delivery_dispute.id },
-      });
     });
 
     const serviceMethodResults: ServiceMethodResults = {
@@ -4352,6 +4326,282 @@ export class DeliveriesService {
       error: false,
       info: {
         data: results,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_customer_ratings_stats(user_id: number) {
+    const results = await get_customer_ratings_stats(user_id);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_customer_ratings_all(user_id: number) {
+    const resultsList = await get_customer_ratings_all(user_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_customer_ratings(user_id: number, min_id?: number) {
+    const resultsList = await get_customer_ratings(user_id, min_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_carrier_ratings_stats(user_id: number) {
+    const results = await get_carrier_ratings_stats(user_id);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_carrier_ratings_all(user_id: number) {
+    const resultsList = await get_carrier_ratings_all(user_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_carrier_ratings(user_id: number, min_id?: number) {
+    const resultsList = await get_carrier_ratings(user_id, min_id);
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: resultsList,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_carrier_delivery_requests_all(delivery_id: number) {
+    const results = await get_carrier_delivery_requests_all(delivery_id);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async get_carrier_delivery_requests(delivery_id: number, carrier_request_id?: number) {
+    const results = await get_carrier_delivery_requests(delivery_id);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async check_carrier_delivery_request(delivery_id: number, user_id: number) {
+    const results = await check_carrier_delivery_request(delivery_id, user_id);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async check_carrier_delivery_request_pending(delivery_id: number, user_id: number) {
+    const results = await check_carrier_delivery_request_pending(delivery_id, user_id);
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: results,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async create_carrier_delivery_request(delivery_id: number, you_id: number) {
+    // assume route guards checked for validations
+
+    const new_request = await create_carrier_delivery_request(delivery_id, you_id);
+    
+    get_delivery_owner_by_delivery_id(delivery_id).then((owner) => {
+      create_notification_and_send({
+        from_id: you_id,
+        to_id: owner.id,
+        event: CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST,
+        target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+        target_id: delivery_id,
+  
+        to_phone: owner.phone,
+        send_mobile_push: true,
+  
+        extras_data: {
+          delivery_id: delivery_id,
+          data: new_request,
+          user_id: you_id,
+        },
+      });
+    });
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        message: `Request sent!`,
+        data: new_request,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async cancel_carrier_delivery_request(carrier_request: IDeliveryCarrierRequest, you_id: number) {
+    // assume route guards checked for validations
+
+    const updates = await update_carrier_delivery_request_status(carrier_request.id, STATUSES.CANCELED);
+    
+    create_notification_and_send({
+      from_id: you_id,
+      to_id: carrier_request.delivery!.owner_id,
+      event: CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST_CANCELED,
+      target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+      target_id: carrier_request.delivery_id,
+
+      to_phone: carrier_request.delivery!.owner!.phone,
+      send_mobile_push: true,
+
+      extras_data: {
+        delivery_id: carrier_request.delivery_id,
+        carrier_request_id: carrier_request.id,
+        user_id: you_id,
+      },
+    });
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        message: `Request canceled`,
+        data: updates.model,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async accept_carrier_delivery_request(carrier_request: IDeliveryCarrierRequest, you_id: number) {
+    // assume route guards checked for validations
+
+    // mark request as accepted
+    const updates = await update_carrier_delivery_request_status(carrier_request.id, STATUSES.ACCEPTED);
+    
+    // get all carrier requests for the delivery
+    const carrier_requests: IDeliveryCarrierRequest[] = await get_carrier_delivery_requests_all(carrier_request.delivery_id);
+    // filter for pending requests that is NOT this one
+    const use_carrier_requests = carrier_requests.filter(r => r.id !== carrier_request.id && r.status === STATUSES.PENDING);
+    // for each carrier request:
+    for (const request of use_carrier_requests) {
+      DeliveriesService.decline_carrier_delivery_request(request, you_id);
+    }
+    
+    
+    // assign the delivery to requested carrier
+    DeliveriesService.assign_delivery({
+      you: carrier_request.carrier!,
+      delivery: carrier_request.delivery
+    })
+    .then((results) => {
+      LOGGER.info(`assigned delivery to accepted carrier`, results);
+    });
+    
+    // send accepted notification
+    create_notification_and_send({
+      from_id: you_id,
+      to_id: carrier_request.user_id,
+      event: CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST_ACCEPTED,
+      target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+      target_id: carrier_request.delivery_id,
+
+      to_phone: carrier_request.carrier!.phone,
+      send_mobile_push: true,
+
+      extras_data: {
+        delivery_id: carrier_request.delivery_id,
+      },
+    });
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: updates.model,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async decline_carrier_delivery_request(carrier_request: IDeliveryCarrierRequest, you_id: number) {
+    // assume route guards checked for validations
+
+    const updates = await update_carrier_delivery_request_status(carrier_request.id, STATUSES.DECLINED);
+    
+    create_notification_and_send({
+      from_id: you_id,
+      to_id: carrier_request.user_id,
+      event: CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST_DECLINED,
+      target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+      target_id: carrier_request.delivery_id,
+
+      to_phone: carrier_request.carrier!.phone,
+      send_mobile_push: true,
+
+      extras_data: {
+        delivery_id: carrier_request.delivery_id,
+        carrier_request_id: carrier_request.id,
+      },
+    });
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: updates.model,
       },
     };
     return serviceMethodResults;

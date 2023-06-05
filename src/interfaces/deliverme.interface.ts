@@ -198,6 +198,7 @@ export interface IDelivery extends ICommonModel {
   delivery_carrier_track_location_updates?: IDeliveryCarrierTrackLocationUpdate[],
 
   delivery_dispute?: IDeliveryDispute,
+  carrier_requests?: IDeliveryCarrierRequest[],
   
   carrier_rating?: ICarryUserRating,
   customer_rating?: ICarryUserRating,
@@ -382,6 +383,17 @@ export interface IDeliveryCarrierTrackLocationUpdate extends ICommonModel {
   delivery_id: number,
   lat: number,
   lng: number,
+}
+
+export interface IDeliveryCarrierRequest extends ICommonModel {
+  id: number,
+  user_id: number,
+  delivery_id: number,
+  message: string | null,
+  status: string,
+
+  carrier?: IUser,
+  delivery?: IDelivery,
 }
 
 export interface IModelRating extends ICommonModel {

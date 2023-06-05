@@ -13,6 +13,15 @@ import {
   UserDoesNotHaveAnUnpaidListing,
   NoCarrierRating,
   NoCustomerRating,
+  DeliveryExistsSlim,
+  DeliveryHasNoAssignedCarrier,
+  CarrierHasNoPendingDeliveryRequest,
+  DeliveryCarrierRequestExistsAndIsPending,
+  IsRequestingCarrier,
+  IsDeliveryOwnerOfDeliveryCarrierRequest,
+  DeliveryHasNoAcceptedRequests,
+  CarrierIsBelowPendingRequestsLimit,
+  CarrierIsBelowCarryingLimit,
 } from '../guards/delivery.guard';
 import {
   DeliveryDisputeExists,
@@ -27,7 +36,7 @@ import {
   IsNotSettlementOfferCreator,
   SettlementStatusIsPending
 } from "../guards/delivery-dispute.guard";
-import { YouAuthorizedSlim, YouAuthorizedSlimWeak } from '../guards/you.guard';
+import { YouAuthorized, YouAuthorizedSlim, YouAuthorizedSlimWeak } from '../guards/you.guard';
 import { ValidateRequestBodyDto } from 'src/middlewares/class-transformer-validator.middleware';
 import { DeliveryRatingDto } from 'src/dto/rating.dto';
 
@@ -37,7 +46,7 @@ export const DeliveriesRouter: Router = Router({ mergeParams: true });
 /** GET */
 
 
-//dispute
+// dispute
 DeliveriesRouter.get('/:delivery_id/dispute', DeliveryDisputeExists, DeliveriesRequestHandler.get_delivery_dispute_by_delivery_id);
 DeliveriesRouter.get('/:delivery_id/dispute-info', DeliveryDisputeInfoExists, DeliveriesRequestHandler.get_delivery_dispute_info_by_delivery_id);
 DeliveriesRouter.get('/:delivery_id/dispute-messages', YouAuthorizedSlim, DeliveryDisputeExists, DeliveriesRequestHandler.get_user_dispute_messages_by_user_id_and_dispute_id);
@@ -47,6 +56,26 @@ DeliveriesRouter.get('/find-available-from/city/:city/state/:state', YouAuthoriz
 DeliveriesRouter.get('/find-available-to/city/:city/state/:state', YouAuthorizedSlim, DeliveriesRequestHandler.find_available_delivery_by_to_city_and_state);
 
 DeliveriesRouter.get('/:delivery_id', DeliveryExists, DeliveriesRequestHandler.get_delivery_by_id);
+
+
+
+/*
+  Delivery Carrier Requests
+*/
+DeliveriesRouter.get('/:delivery_id/carrier-requests/all', DeliveryExistsSlim, DeliveriesRequestHandler.get_carrier_delivery_requests_all);
+DeliveriesRouter.get('/:delivery_id/carrier-requests', DeliveryExistsSlim, DeliveriesRequestHandler.get_carrier_delivery_requests);
+DeliveriesRouter.get('/:delivery_id/carrier-requests/:carrier_request_id', DeliveryExistsSlim, DeliveriesRequestHandler.get_carrier_delivery_requests);
+
+DeliveriesRouter.get('/:delivery_id/carrier-requests/check-user/:user_id', DeliveryExistsSlim, DeliveriesRequestHandler.check_carrier_delivery_request);
+DeliveriesRouter.get('/:delivery_id/carrier-requests-pending/check-user/:user_id', DeliveryExistsSlim, DeliveriesRequestHandler.check_carrier_delivery_request_pending);
+
+DeliveriesRouter.post('/:delivery_id/carrier-requests/:user_id', YouAuthorizedSlim, DeliveryExists, DeliveryHasNoAssignedCarrier, DeliveryHasNoAcceptedRequests, CarrierHasNoPendingDeliveryRequest, CarrierIsBelowCarryingLimit, CarrierIsBelowPendingRequestsLimit, DeliveriesRequestHandler.create_carrier_delivery_request);
+
+DeliveriesRouter.put('/:delivery_id/carrier-requests/:carrier_request_id/cancel', YouAuthorizedSlim, DeliveryExists, DeliveryHasNoAssignedCarrier, DeliveryCarrierRequestExistsAndIsPending, IsRequestingCarrier, DeliveriesRequestHandler.cancel_carrier_delivery_request);
+DeliveriesRouter.put('/:delivery_id/carrier-requests/:carrier_request_id/accept', YouAuthorizedSlim, DeliveryExists, DeliveryHasNoAssignedCarrier, DeliveryCarrierRequestExistsAndIsPending, IsDeliveryOwnerOfDeliveryCarrierRequest, DeliveriesRequestHandler.accept_carrier_delivery_request);
+DeliveriesRouter.put('/:delivery_id/carrier-requests/:carrier_request_id/decline', YouAuthorizedSlim, DeliveryExists, DeliveryHasNoAssignedCarrier, DeliveryCarrierRequestExistsAndIsPending, IsDeliveryOwnerOfDeliveryCarrierRequest,  DeliveriesRequestHandler.decline_carrier_delivery_request);
+
+
 
 
 /** POST */

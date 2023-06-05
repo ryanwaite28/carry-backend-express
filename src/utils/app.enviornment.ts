@@ -53,8 +53,11 @@ export class AppEnvironment {
   public static readonly AWS = {
     SES: {
       EMAIL: process.env[`PLATFORM_AWS_SES_EMAIL`]!,
-      EMAIL_INTERNAL: process.env[`PLATFORM_AWS_SES_EMAIL_INTERNAL`]!,
       ARN: process.env[`PLATFORM_AWS_SES_ARN`]!,
+      
+      EMAIL_INTERNAL_SENDER: process.env[`PLATFORM_AWS_SES_EMAIL_INTERNAL_SENDER`]!,
+      EMAIL_INTERNAL_RECEIVER: process.env[`PLATFORM_AWS_SES_EMAIL_INTERNAL_RECEIVER`]!,
+      ARN_INTERNAL: process.env[`PLATFORM_AWS_SES_ARN_INTERNAL`]!,
     },
     S3: {
       BUCKET: process.env[`PLATFORM_AWS_S3_BUCKET`]!,

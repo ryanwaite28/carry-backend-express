@@ -500,6 +500,42 @@ export const populate_carry_notification_obj = async (
   let mount_value = null;
 
   switch (notificationObj.event) {
+    case CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} is requesting to fulfill your delivery: ${delivery!.title}`;
+      mount_prop_key = "delivery";
+      mount_value = delivery!;
+      break;
+    }
+    case CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST_CANCELED: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} canceled their request to fulfill your delivery: ${delivery!.title}`;
+      mount_prop_key = "delivery";
+      mount_value = delivery!;
+      break;
+    }
+    case CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST_ACCEPTED: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} accepted your request to fulfill their delivery: ${delivery!.title}`;
+      mount_prop_key = "delivery";
+      mount_value = delivery!;
+      break;
+    }
+    case CARRY_EVENT_TYPES.CARRIER_DELIVERY_REQUEST_DECLINED: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} declined your request to fulfill their delivery: ${delivery!.title}`;
+      mount_prop_key = "delivery";
+      mount_value = delivery!;
+      break;
+    }
     case CARRY_EVENT_TYPES.CARRIER_ASSIGNED: {
       const delivery: IDelivery | null = await get_delivery_by_id(
         notificationObj.target_id

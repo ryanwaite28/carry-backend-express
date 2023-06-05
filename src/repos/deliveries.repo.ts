@@ -8,10 +8,12 @@ import {
   FindAttributeOptions,
   GroupOption,
   Order,
+  col,
+  cast,
 } from "sequelize";
 import { STATUSES } from "../enums/common.enum";
 import { PlainObject } from "../interfaces/common.interface";
-import { delete_cloudinary_image } from "../utils/cloudinary-manager.utils";
+import { delete_cloud_image, delete_cloudinary_image } from "../utils/cloudinary-manager.utils";
 import { DeliveryDisputeSettlementOfferStatus } from "../enums/carry.enum";
 import { IMyModel } from "../interfaces/carry.interface";
 import {
@@ -27,6 +29,8 @@ import {
   IDeliveryMessage,
   IDeliveryTrackingUpdate,
   IDeliveryUnpaidListing,
+  IDeliveryCarrierTrackLocationUpdate,
+  IDeliveryCarrierRequest,
 } from "../interfaces/deliverme.interface";
 import {
   DeliveryTrackingUpdates,
@@ -47,6 +51,7 @@ import {
   CarryUserCarrierRatings,
   DeliveryInsurances,
   DeliveryUnpaidListings,
+  DeliveryCarrierRequests,
 } from "../models/delivery.model";
 import { delivery_search_attrs } from "../utils/carry.chamber";
 import { user_attrs_slim } from "../utils/constants.utils";
@@ -67,6 +72,9 @@ const delivery_unpaid_listings_crud = create_model_crud_repo_from_model_class<ID
 const customer_ratings_crud = create_model_crud_repo_from_model_class<ICarryUserRating>(CarryUserCustomerRatings);
 const carrier_ratings_crud = create_model_crud_repo_from_model_class<ICarryUserRating>(CarryUserCarrierRatings);
 
+const delivery_tracking_location_updates_crud = create_model_crud_repo_from_model_class<IDeliveryCarrierTrackLocationUpdate>(DeliveryTrackingUpdates);
+const delivery_carrier_requests_crud = create_model_crud_repo_from_model_class<IDeliveryCarrierRequest>(DeliveryCarrierRequests);
+
 
 
 export const deliveryOrderBy: Order = [
@@ -79,6 +87,11 @@ export const deliveryTrackingOrderBy: Order = [
 
 const convertDeliveryModel = convertModelCurry<IDelivery>();
 const convertDeliveryModels = convertModelsCurry<IDelivery>();
+
+export const deliveryCarrierRequestIncludes = [
+  { model: Users, as: 'carrier', attributes: user_attrs_slim },
+  { model: Delivery, as: 'delivery', include: [{ model: Users, as: 'owner', attributes: user_attrs_slim }] },
+];
 
 export const deliveryGeneralIncludes: Includeable[] = [{
   model: Users,
@@ -159,7 +172,18 @@ export const deliveryMasterIncludes: Includeable[] = [
   },
   {
     model: DeliveryCarrierTrackLocationUpdates,
-    as: `delivery_carrier_track_location_updates`,
+    as: `carrier_location_updates`,
+  },
+  {
+    model: DeliveryCarrierRequests,
+    as: 'carrier_requests',
+    include: [
+      {
+        model: Users,
+        as: 'carrier',
+        attributes: user_attrs_slim
+      }
+    ]
   },
   {
     model: DeliveryMessages,
@@ -298,16 +322,16 @@ export async function reset_delivery(delivery: IDelivery) {
   const delivery_id: number = delivery.id;
 
   if (delivery.from_person_id_image_id) {
-    delete_cloudinary_image(delivery.from_person_id_image_id);
+    delete_cloud_image(delivery.from_person_id_image_id);
   }
   if (delivery.from_person_sig_image_id) {
-    delete_cloudinary_image(delivery.from_person_sig_image_id);
+    delete_cloud_image(delivery.from_person_sig_image_id);
   }
   if (delivery.to_person_id_image_id) {
-    delete_cloudinary_image(delivery.to_person_id_image_id);
+    delete_cloud_image(delivery.to_person_id_image_id);
   }
   if (delivery.to_person_sig_image_id) {
-    delete_cloudinary_image(delivery.to_person_sig_image_id);
+    delete_cloud_image(delivery.to_person_sig_image_id);
   }
 
   const updatesobj: PlainObject = {};
@@ -346,6 +370,16 @@ export async function reset_delivery(delivery: IDelivery) {
   return updates;
 }
 
+
+export function exists_delivery_by_id(id: number) {
+  return delivery_crud.findOne({
+    where: { id },
+    include: deliveryMasterIncludes,
+    attributes: ['id']
+    // order: deliveryTrackingOrderBy,
+  })
+  .then((result) => !!result);
+}
 
 export function get_delivery_by_id(id: number) {
   return delivery_crud.findOne({
@@ -599,9 +633,9 @@ export function browse_featured_deliveries(
 
   const findQuery = {
     where: useWhere,
-    include: deliveryMasterIncludes,
+    // include: deliveryMasterIncludes,
     // order: deliveryTrackingOrderBy,
-    limit: 10,
+    limit: 5,
   };
 
   return delivery_crud.findAll(findQuery);
@@ -980,6 +1014,19 @@ export function create_delivery_dispute(params: {
     }); 
 }
 
+export function get_delivery_owner_by_delivery_id(delivery_id: number) {
+  return delivery_crud.findOne({
+    where: { id: delivery_id },
+    attributes: ['id', 'owner_id'],
+    include: [
+      { model: Users, as: 'owner', attributes: user_attrs_slim }
+    ]
+  })
+  .then((delivery) => {
+    return delivery.owner!
+  });
+}
+
 export function update_delivery_dispute(id: number, params: Partial<{
   creator_id: number,
   user_id: number,
@@ -1219,4 +1266,168 @@ export function check_delivery_unpaid_listing_is_unpaid(delivery_id: number) {
 
 export function check_user_has_unpaid_listings(user_id: number) {
   return delivery_unpaid_listings_crud.findOne({ where: { user_id, paid: false } });
+}
+
+export function create_delivery_tracking_location_update(params: {
+  delivery: number,
+  lat: number,
+  lng: number,
+}) {
+  return delivery_tracking_location_updates_crud.create(params);
+}
+
+export function get_delivery_tracking_location_updates_by_delivery_id_all(delivery_id: number) {
+  return delivery_tracking_location_updates_crud.findAll({ where: { delivery_id } });
+}
+
+export function clear_delivery_tracking_location_updates_by_delivery_id(delivery_id: number) {
+  return delivery_tracking_location_updates_crud.destroy({ where: { delivery_id } });
+}
+
+
+
+
+
+export function get_carrier_delivery_request_by_id(id: number) {
+  return delivery_carrier_requests_crud.findOne({ 
+    where: { id },
+    include: deliveryCarrierRequestIncludes
+  });
+}
+
+export function get_carrier_requests_all(user_id: number) {
+  return delivery_carrier_requests_crud.findAll({
+    where: { user_id },
+    include: [{ model: Delivery, as: 'delivery', include: [{ model: Users, as: 'owner', attributes: user_attrs_slim }] }],
+    order: [['id', 'DESC']]
+  });
+}
+
+export function get_carrier_requests_pending_all(user_id: number) {
+  return delivery_carrier_requests_crud.findAll({
+    where: { user_id, status: STATUSES.PENDING },
+    include: [{ model: Delivery, as: 'delivery', include: [{ model: Users, as: 'owner', attributes: user_attrs_slim }] }],
+    order: [['id', 'DESC']]
+  });
+}
+
+export async function get_carrier_requests(user_id: number, carrier_request_id?: number) {
+  return delivery_carrier_requests_crud.paginate({
+    user_id_field: 'user_id',
+    user_id,
+    min_id: carrier_request_id,
+    include: [{ model: Delivery, as: 'delivery', include: [{ model: Users, as: 'owner', attributes: user_attrs_slim }] }],
+    orderBy: deliveryOrderBy
+  });
+}
+
+export function get_carrier_delivery_requests_all(delivery_id: number) {
+  return delivery_carrier_requests_crud.findAll({
+    where: { delivery_id },
+    include: deliveryCarrierRequestIncludes
+  });
+}
+
+export function get_carrier_delivery_requests(delivery_id: number, carrier_request_id?: number) {
+  return delivery_carrier_requests_crud.paginate({
+    user_id_field: 'delivery_id',
+    user_id: delivery_id,
+    min_id: carrier_request_id,
+    include: deliveryCarrierRequestIncludes,
+    orderBy: [['id', 'DESC']]
+  });
+}
+
+export function delivery_has_an_accepted_carrier_request(delivery_id: number) {
+  return delivery_carrier_requests_crud.findOne({
+    where: { delivery_id, status: STATUSES.ACCEPTED },
+    include: deliveryCarrierRequestIncludes
+  });
+}
+
+export function delivery_has_at_lease_one_pending_carrier_request(delivery_id: number) {
+  return delivery_carrier_requests_crud.findOne({
+    where: { delivery_id, status: STATUSES.PENDING },
+    include: deliveryCarrierRequestIncludes
+  });
+}
+
+export function check_carrier_delivery_request(delivery_id: number, user_id: number) {
+  return delivery_carrier_requests_crud.findOne({
+    where: { delivery_id, user_id },
+    include: deliveryCarrierRequestIncludes
+  });
+}
+
+export function check_carrier_delivery_request_pending(delivery_id: number, user_id: number) {
+  return delivery_carrier_requests_crud.findOne({
+    where: { delivery_id, user_id, status: STATUSES.PENDING },
+    include: deliveryCarrierRequestIncludes
+  });
+}
+
+export function create_carrier_delivery_request(delivery_id: number, user_id: number) {
+  return delivery_carrier_requests_crud.create({ delivery_id, user_id, status: STATUSES.PENDING });
+}
+
+export function update_carrier_delivery_request_status(request_id: number, status: string) {
+  return delivery_carrier_requests_crud.updateById(request_id, { status });
+}
+
+export function get_customer_ratings_stats(user_id: number) {
+  return CarryUserCustomerRatings.findOne({
+    where: { user_id },
+    attributes: [
+      [cast(fn('AVG', col('rating')), 'float'), 'ratingsAvg'],
+      [cast(fn('COUNT', col('rating')), 'float'), 'ratingsCount'],
+    ],
+    group: ['user_id'],
+  }) 
+}
+
+export function get_customer_ratings_all(user_id: number) {
+  return customer_ratings_crud.findAll({
+    where: { user_id },
+    include: deliveryRatingsInclude
+  });
+}
+
+export function get_customer_ratings(user_id: number, min_id?: number) {
+  return customer_ratings_crud.paginate({
+    user_id_field: 'user_id',
+    user_id,
+    min_id,
+    include: deliveryRatingsInclude,
+    orderBy: [['id', 'DESC']]
+  });
+}
+
+
+
+export function get_carrier_ratings_stats(user_id: number) {
+  return CarryUserCarrierRatings.findOne({
+    where: { user_id },
+    attributes: [
+      [cast(fn('AVG', col('rating')), 'float'), 'ratingsAvg'],
+      [cast(fn('COUNT', col('rating')), 'float'), 'ratingsCount'],
+    ],
+    group: ['user_id'],
+  }) 
+}
+
+export function get_carrier_ratings_all(user_id: number) {
+  return carrier_ratings_crud.findAll({
+    where: { user_id },
+    include: deliveryRatingsInclude
+  });
+}
+
+export function get_carrier_ratings(user_id: number, min_id?: number) {
+  return carrier_ratings_crud.paginate({
+    user_id_field: 'user_id',
+    user_id,
+    min_id,
+    include: deliveryRatingsInclude,
+    orderBy: [['id', 'DESC']]
+  });
 }
