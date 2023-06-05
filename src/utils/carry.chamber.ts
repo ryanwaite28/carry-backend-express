@@ -791,6 +791,20 @@ export const populate_carry_notification_obj = async (
       break;
     }
 
+    case CARRY_EVENT_TYPES.CARRIER_REMOVED: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} removed you as the carrier from their delivery: ${
+        delivery!.title
+      }`;
+      mount_prop_key = "delivery";
+      mount_value = delivery;
+
+      notificationObj.delivery = delivery;
+      break;
+    }
+
     case CARRY_EVENT_TYPES.NEW_DELIVERY_CARRIER_REVIEW: {
       const delivery: IDelivery | null = await get_delivery_by_id(
         notificationObj.target_id

@@ -63,6 +63,7 @@ import {
   create_model_crud_repo_from_model_class,
 } from "../utils/helpers.utils";
 import { getAll, paginateTable } from "./_common.repo";
+import { LOGGER } from "src/utils/logger.utils";
 
 
 
@@ -333,6 +334,9 @@ export async function reset_delivery(delivery: IDelivery) {
   if (delivery.to_person_sig_image_id) {
     delete_cloud_image(delivery.to_person_sig_image_id);
   }
+  if (delivery.delivered_image_id) {
+    delete_cloud_image(delivery.delivered_image_id);
+  }
 
   const updatesobj: PlainObject = {};
 
@@ -345,12 +349,21 @@ export async function reset_delivery(delivery: IDelivery) {
   updatesobj.to_person_id_image_id = null;
   updatesobj.to_person_sig_image_link = null;
   updatesobj.to_person_sig_image_id = null;
+  
+  updatesobj.delivered_image_link = null;
+  updatesobj.delivered_image_id = null;
 
   updatesobj.carrier_id = null;
   updatesobj.carrier_assigned_date = null;
   updatesobj.datetime_picked_up = null;
   updatesobj.datetime_delivered = null;
   updatesobj.datetime_completed = null;
+  
+  updatesobj.carrier_latest_lat = null;
+  updatesobj.carrier_latest_lng = null;
+  updatesobj.carrier_location_requested = false;
+  updatesobj.carrier_location_request_completed = false;
+  updatesobj.carrier_shared_location = false;
   
   const updates = await update_delivery(delivery_id, updatesobj);
 
@@ -365,6 +378,14 @@ export async function reset_delivery(delivery: IDelivery) {
   });
   const carrierTrackLocationUpdateDeletes = await DeliveryCarrierTrackLocationUpdates.destroy({
     where: { delivery_id },
+  });
+  const deliveryCarrierTrackLocationRequests = await DeliveryCarrierTrackLocationRequests.destroy({
+    where: { delivery_id },
+  });
+  // remove any pending disputes
+  DeliveryDisputes.update({ delivery_id: -1, details: `delivery reseted; original id: ${delivery_id}` }, { where: { delivery_id } })
+  .catch((error) => {
+    LOGGER.error(`Could not reset delivery disputes:`, error);
   });
   
   return updates;

@@ -119,6 +119,7 @@ import { get_user_new_listings_alerts_by_where } from 'src/repos/users.repo';
 import { LOGGER } from 'src/utils/logger.utils';
 import { sendAwsEmail, sendAwsInternalEmail } from 'src/utils/ses.aws.utils';
 import { HandlebarsEmailsService } from './emails.service';
+import { minutesPast } from 'src/utils/date.utils';
 
 
 
@@ -2875,6 +2876,59 @@ export class DeliveriesService {
       info: {
         message: `Rating created!`,
         data: new_review,
+      },
+    };
+    return serviceMethodResults;
+  }
+
+  static async remove_carrier(options: {
+    you: IUser;
+    delivery: IDelivery;
+    ignoreNotification?: boolean
+  }) {
+    const { you, delivery, ignoreNotification } = options;
+
+    const delivery_id = delivery.id;
+    const owner_id = delivery.owner_id;
+    const carrier_id = delivery.carrier_id;
+
+    const MIN_WAIT_BEFORE_REMOVING_CARRIER: number = 20;
+
+    const carrierNotPickedUpIn20MinutesSinceListingCreated = !!delivery.carrier_id && !delivery.datetime_picked_up && (minutesPast(delivery.carrier_assigned_date!) >= MIN_WAIT_BEFORE_REMOVING_CARRIER);
+    if (carrierNotPickedUpIn20MinutesSinceListingCreated) {
+      const serviceMethodResults: ServiceMethodResults = {
+        status: HttpStatusCode.BAD_REQUEST,
+        error: true,
+        info: {
+          message: `Has not been ${MIN_WAIT_BEFORE_REMOVING_CARRIER} since carrier was assigned`
+        },
+      };
+      return serviceMethodResults;
+    }
+
+    const updates = await reset_delivery(delivery);
+
+    create_notification_and_send({
+      from_id: you.id,
+      to_id: carrier_id,
+      event: CARRY_EVENT_TYPES.CARRIER_REMOVED,
+      target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+      target_id: delivery_id,
+
+      to_phone: delivery.carrier?.phone,
+      send_mobile_push: true,
+
+      extras_data: {
+        delivery_id,
+      },
+    });
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        message: `Delivery unassigned by owner!`,
+        data: updates,
       },
     };
     return serviceMethodResults;

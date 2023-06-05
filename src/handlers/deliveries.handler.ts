@@ -346,6 +346,15 @@ export class DeliveriesRequestHandler {
   
 
 
+  static async remove_carrier(request: Request, response: Response): ExpressResponse {
+    const options = {
+      you: response.locals.you! as IUser,
+      delivery: response.locals.delivery_model as IDelivery,
+    };
+    const serviceMethodResults: ServiceMethodResults = await DeliveriesService.remove_carrier(options);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
+
   static async pay_carrier_via_transfer(request: Request, response: Response): ExpressResponse {
     const options = {
       you: response.locals.you! as IUser,
