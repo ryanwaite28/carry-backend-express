@@ -338,7 +338,7 @@ export async function reset_delivery(delivery: IDelivery) {
     delete_cloud_image(delivery.delivered_image_id);
   }
 
-  const updatesobj: PlainObject = {};
+  const updatesobj: Partial<IDelivery> = {};
 
   updatesobj.from_person_id_image_link = null;
   updatesobj.from_person_id_image_id = null;
