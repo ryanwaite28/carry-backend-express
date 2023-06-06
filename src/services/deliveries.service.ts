@@ -754,7 +754,11 @@ export class DeliveriesService {
           capture_method: 'manual', // place hold for now, will collect when listing is fulfilled
           off_session: true,
           confirm: true,
-          receipt_email: you.email
+          receipt_email: you.email,
+          metadata: {
+            user_id: you.id,
+            stripe_customer_account: you.stripe_customer_account_id,
+          }
         });
       }
       catch (e) {
@@ -1254,6 +1258,18 @@ export class DeliveriesService {
         }
       });
     }
+
+    await StripeService.stripe.paymentIntents.update(
+      delivery.payment_intent_id,
+      {
+        metadata: {
+          carrier_id: you.id,
+          carrier_stripe_account_id: you.stripe_account_id,
+        },
+      },
+    ).catch((error) => {
+      LOGGER.error(`Could not updata payment intent metadata`, { error });
+    });
 
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,
