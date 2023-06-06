@@ -5,6 +5,7 @@ import { ExpressResponse, ServiceMethodResults, PlainObject } from '../interface
 import { UsersService } from '../services/users.service';
 import { ApplyToAllMethods, CatchRequestHandlerError, MethodLogger } from '../decorators/service-method-error-handler.decorator';
 import { DeliveriesService } from 'src/services/deliveries.service';
+import { LOGGER } from 'src/utils/logger.utils';
 
 
 
@@ -246,6 +247,7 @@ export class UsersRequestHandler {
   static async remove_expo_device_and_push_token(request: Request, response: Response): ExpressResponse {
     const you: IUser = response.locals.you;
     const expo_token: string = request.params.expo_token;
+    LOGGER.info(`Removing user expo token:`, { user_id: you?.id, expo_token });
     const serviceMethodResults: ServiceMethodResults = await UsersService.remove_expo_device_and_push_token(you.id, expo_token);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
@@ -254,17 +256,16 @@ export class UsersRequestHandler {
   static async create_stripe_account(request: Request, response: Response): ExpressResponse {
     const you: IUser = response.locals.you;
     const redirectUrl = request.query.redirectUrl || request.body.redirectUrl;
-    console.log(`UsersRequestHandler.create_stripe_account:`, { you, redirectUrl });
-    // const 
+    LOGGER.info(`UsersRequestHandler.create_stripe_account:`, { you, redirectUrl });
     const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_account(you.id, redirectUrl);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
-
+  
   static async create_stripe_identity_verification_session(request: Request, response: Response): ExpressResponse {
     const you: IUser = response.locals.you;
-    console.log(`UsersRequestHandler.create_stripe_identity_verification_session:`, { you });
-    // const 
-    const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_identity_verification_session(you.id);
+    const redirectUrl = request.query.redirectUrl || request.body.redirectUrl;
+    LOGGER.info(`UsersRequestHandler.create_stripe_identity_verification_session:`, { you, redirectUrl });
+    const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_identity_verification_session(you.id, redirectUrl);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
   

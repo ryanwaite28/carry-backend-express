@@ -94,12 +94,12 @@ export function YouStripeIdentityIsVerifiedAfter3DaysSinceSignup(
 ) {
   const you: IUser = response.locals.you;
 
-  const userSignedUp3DaysAgo = daysPast(you.date_created) >= 3;
+  const userSignedUp3DaysAgo = daysPast(you.date_created) > 2;
   const notIdentityVerifiedAfter3DaysSinceSignup = userSignedUp3DaysAgo && !you.stripe_identity_verified;
 
   if (notIdentityVerifiedAfter3DaysSinceSignup) {
     return response.status(HttpStatusCode.FORBIDDEN).json({
-      message: `Identity not verified. It has been 3 days since signup, your identity is now required to continue using the platform.`
+      message: `Identity not verified. It has been more than 2 days since signup, your identity is now required to continue using the platform.`
     });
   }
 

@@ -1986,7 +1986,7 @@ export class UsersService {
     return serviceMethodResults;
   }
 
-  static async create_stripe_identity_verification_session(user_id: number, redirectUrl?: string): ServiceMethodAsyncResults {
+  static async create_stripe_identity_verification_session(user_id: number, redirectUrl: string): ServiceMethodAsyncResults {
     let verification_session_id: string;
     let verification_session_client_secret: string;
     
@@ -2031,19 +2031,25 @@ export class UsersService {
 
     const useUploadUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/stripe-identity-verification-upload?stripe_pk=${AppEnvironment.API_KEYS.STRIPE_PK}&verification_session_client_secret=${verification_session_client_secret}&return_url=${useReturnUrl}`;
 
+    const data = {
+      stripe_pk: AppEnvironment.API_KEYS.STRIPE_PK,
+      useUploadUrl,
+      useReturnUrl,
+      redirectUrl,
+      verification_session_id,
+      verification_session_client_secret,
+      // ephemeral_key_secret: ephemeral_key.secret,
+      // ephemeral_key,
+    };
+
+    console.log({ user_id, data });
+    LOGGER.info(`Stripe identity verification session params`, { user_id, data });
+
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,
       error: false,
       info: {
-        data: {
-          stripe_pk: AppEnvironment.API_KEYS.STRIPE_PK,
-          useUploadUrl,
-          useReturnUrl,
-          verification_session_id,
-          verification_session_client_secret,
-          // ephemeral_key_secret: ephemeral_key.secret,
-          // ephemeral_key,
-        }
+        data,
       }
     };
     return serviceMethodResults;

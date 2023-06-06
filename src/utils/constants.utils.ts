@@ -573,17 +573,18 @@ export const corsOptions: CorsOptions = {
   origin(origin: string | undefined, callback: any) {
     const useOrigin = (origin || '');
     const originIsAllowed = AppEnvironment.CORS.WHITELIST.includes(useOrigin);
-    // console.log({
-    //   origin,
-    //   callback,
-    //   originIsAllowed,
-    //   whitelist_domains,
-    // });
-
+    
     if (originIsAllowed) {
       callback(null, true);
-    } else {
-      callback(new Error(`Origin "${origin}" Not allowed by CORS`));
+    } 
+    else {
+      console.log({
+        origin,
+        // callback,
+        originIsAllowed,
+        // whitelist_domains,
+      });
+      callback(new Error(`Web Origin "${origin}" Not allowed by CORS`));
     }
   }
 };
@@ -596,16 +597,17 @@ export const corsMobileOptions: CorsOptions = {
     // console.log(`mobile request:`, { origin });
     const useOrigin = (origin || '');
     const originIsAllowed = !useOrigin || AppEnvironment.CORS.WHITELIST.includes(useOrigin);
-    // console.log({
-    //   origin,
-    //   callback,
-    //   originIsAllowed,
-    //   whitelist_domains,
-    // });
-
+    
     if (originIsAllowed) {
       callback(null, true);
-    } else {
+    }
+    else {
+      console.log({
+        origin,
+        // callback,
+        originIsAllowed,
+        // whitelist_domains,
+      });
       callback(new Error(`Mobile Origin "${origin}" Not allowed by CORS`));
     }
   }
