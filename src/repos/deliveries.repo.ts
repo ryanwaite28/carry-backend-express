@@ -52,6 +52,8 @@ import {
   DeliveryInsurances,
   DeliveryUnpaidListings,
   DeliveryCarrierRequests,
+  DeliveryCarrierPickupApproachingNotifications,
+  DeliveryCarrierDropoffApproachingNotifications,
 } from "../models/delivery.model";
 import { delivery_search_attrs } from "../utils/carry.chamber";
 import { user_attrs_slim } from "../utils/constants.utils";
@@ -156,6 +158,14 @@ export const deliveryMasterIncludes: Includeable[] = [
   {
     model: DeliveryInsurances,
     as: `delivery_insurance`,
+  },
+  {
+    model: DeliveryCarrierPickupApproachingNotifications,
+    as: `carrier_pickup_approaching`,
+  },
+  {
+    model: DeliveryCarrierDropoffApproachingNotifications,
+    as: `carrier_dropoff_approaching`,
   },
   {
     model: DeliveryCarrierTrackLocationRequests,
@@ -380,6 +390,12 @@ export async function reset_delivery(delivery: IDelivery) {
     where: { delivery_id },
   });
   const deliveryCarrierTrackLocationRequests = await DeliveryCarrierTrackLocationRequests.destroy({
+    where: { delivery_id },
+  });
+  await DeliveryCarrierPickupApproachingNotifications.destroy({
+    where: { delivery_id },
+  });
+  await DeliveryCarrierDropoffApproachingNotifications.destroy({
     where: { delivery_id },
   });
   // remove any pending disputes
@@ -818,13 +834,7 @@ export function create_delivery_carrier_lat_lng_location_update(params: {
   lat: number,
   lng: number,
 }) {
-  const { delivery_id, lat, lng } = params;
-
-  return DeliveryCarrierTrackLocationUpdates.create({
-    delivery_id,
-    lat, 
-    lng,
-  });
+  return DeliveryCarrierTrackLocationUpdates.create(params);
 }
 
 
@@ -1451,4 +1461,21 @@ export function get_carrier_ratings(user_id: number, min_id?: number) {
     include: deliveryRatingsInclude,
     orderBy: [['id', 'DESC']]
   });
+}
+
+
+export function check_delivery_carrier_was_near_pickup(delivery_id: number) {
+  return DeliveryCarrierPickupApproachingNotifications.findOne({ where: { delivery_id } });
+}
+
+export function check_delivery_carrier_was_near_dropoff(delivery_id: number) {
+  return DeliveryCarrierDropoffApproachingNotifications.findOne({ where: { delivery_id } });
+}
+
+export function create_delivery_carrier_was_near_pickup(delivery_id: number, carrier_id: number) {
+  return DeliveryCarrierPickupApproachingNotifications.create({ delivery_id, carrier_id }).then(model => model.dataValues);
+}
+
+export function create_delivery_carrier_was_near_dropoff(delivery_id: number, carrier_id: number) {
+  return DeliveryCarrierDropoffApproachingNotifications.create({ delivery_id, carrier_id }).then(model => model.dataValues);
 }

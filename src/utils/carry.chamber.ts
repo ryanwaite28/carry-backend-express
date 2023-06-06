@@ -791,6 +791,33 @@ export const populate_carry_notification_obj = async (
       break;
     }
 
+    case CARRY_EVENT_TYPES.CARRIER_APPROACHING_PICKUP_LOCATION: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} is approaching the pickup location of your delivery: ${
+        delivery!.title
+      }`;
+      mount_prop_key = "delivery";
+      mount_value = delivery;
+
+      notificationObj.delivery = delivery;
+      break;
+    }
+    case CARRY_EVENT_TYPES.CARRIER_APPROACHING_DROPOFF_LOCATION: {
+      const delivery: IDelivery | null = await get_delivery_by_id(
+        notificationObj.target_id
+      );
+      message = `${full_name} is approaching the dropoff location of your delivery: ${
+        delivery!.title
+      }`;
+      mount_prop_key = "delivery";
+      mount_value = delivery;
+
+      notificationObj.delivery = delivery;
+      break;
+    }
+
     case CARRY_EVENT_TYPES.CARRIER_REMOVED: {
       const delivery: IDelivery | null = await get_delivery_by_id(
         notificationObj.target_id

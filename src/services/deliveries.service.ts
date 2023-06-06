@@ -77,6 +77,10 @@ import {
   get_customer_ratings,
   get_carrier_ratings_all,
   get_carrier_ratings,
+  check_delivery_carrier_was_near_pickup,
+  check_delivery_carrier_was_near_dropoff,
+  create_delivery_carrier_was_near_pickup,
+  create_delivery_carrier_was_near_dropoff,
 } from '../repos/deliveries.repo';
 import {
   create_notification,
@@ -104,6 +108,7 @@ import { IUser, INotification } from '../interfaces/carry.interface';
 import {
   validateData,
   validateAndUploadImageFile,
+  get_distance_haversine_distance,
 } from '../utils/helpers.utils';
 import { UsersService } from './users.service';
 import Stripe from 'stripe';
@@ -3716,17 +3721,95 @@ export class DeliveriesService {
     carrier_latest_lat: number;
     carrier_latest_lng: number;
   }) {
+    const { you, delivery, carrier_latest_lat, carrier_latest_lng } = options;
+
     const updates = await set_delivery_carrier_lat_lng_location({
-      id: options.delivery.id,
-      carrier_latest_lat: options.carrier_latest_lat,
-      carrier_latest_lng: options.carrier_latest_lng,
+      id: delivery.id,
+      carrier_latest_lat: carrier_latest_lat,
+      carrier_latest_lng: carrier_latest_lng,
     });
 
     const new_tracking_location_update = await create_delivery_carrier_lat_lng_location_update({
-      delivery_id: options.delivery.id,
-      lat: options.carrier_latest_lat,
-      lng: options.carrier_latest_lng,
+      delivery_id: delivery.id,
+      lat: carrier_latest_lat,
+      lng: carrier_latest_lng,
     });
+
+    /* 
+      check if carrier is near pickup/dropoff and if not notified delivery owner before before
+    */
+    const carrier_distance_from_pickup = get_distance_haversine_distance({
+      from_lat: carrier_latest_lat,
+      from_lng: carrier_latest_lng,
+      to_lat: delivery.from_lat,
+      to_lng: delivery.from_lng,
+    });
+    const carrier_distance_from_dropoff = get_distance_haversine_distance({
+      from_lat: carrier_latest_lat,
+      from_lng: carrier_latest_lng,
+      to_lat: delivery.to_lat,
+      to_lng: delivery.to_lng,
+    });
+
+    const isWithinHalfMileOfPickup = carrier_distance_from_pickup <= 0.5;
+    const isWithinHalfMileOfDropoff = carrier_distance_from_dropoff <= 0.5;
+
+    const check_near_pickup_notified = await check_delivery_carrier_was_near_pickup(delivery.id);
+    const check_near_dropoff_notified = await check_delivery_carrier_was_near_dropoff(delivery.id);
+    
+    if (!check_near_pickup_notified && isWithinHalfMileOfPickup) {
+      // notify owner that carrier is near pickup
+      create_notification_and_send({
+        from_id: you.id,
+        to_id: delivery.owner_id,
+        event: CARRY_EVENT_TYPES.CARRIER_APPROACHING_PICKUP_LOCATION,
+        target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+        target_id: delivery.id,
+  
+        to_phone: delivery.owner.phone,
+        send_mobile_push: true,
+  
+        extras_data: {
+          delivery_id: delivery.id,
+          user_id: you.id,
+        },
+      })
+      .then((notification) => {
+        // record this push notification
+        LOGGER.info(`created event notification`, { notification });
+        return create_delivery_carrier_was_near_pickup(delivery.id, you.id);
+      })
+      .then((pickup_notification) => {
+        LOGGER.info(`created pickup approaching notification`, { pickup_notification });
+      });
+    }
+    else if (!check_near_dropoff_notified && isWithinHalfMileOfDropoff) {
+      // notify owner that carrier is near dropoff
+      create_notification_and_send({
+        from_id: you.id,
+        to_id: delivery.owner_id,
+        event: CARRY_EVENT_TYPES.CARRIER_APPROACHING_DROPOFF_LOCATION,
+        target_type: CARRY_NOTIFICATION_TARGET_TYPES.DELIVERY,
+        target_id: delivery.id,
+  
+        to_phone: delivery.owner.phone,
+        send_mobile_push: true,
+  
+        extras_data: {
+          delivery_id: delivery.id,
+          user_id: you.id,
+        },
+      })
+      .then((notification) => {
+        // record this push notification
+        LOGGER.info(`created event notification`, { notification });
+        return create_delivery_carrier_was_near_dropoff(delivery.id, you.id);
+      })
+      .then((dropoff_notification) => {
+        LOGGER.info(`created dropoff approaching notification`, { dropoff_notification });
+      });
+    }
+
 
     const serviceMethodResults: ServiceMethodResults = {
       status: HttpStatusCode.OK,

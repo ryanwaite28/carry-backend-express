@@ -497,3 +497,31 @@ export const create_model_crud_repo_from_model_class = <T> (givenModelClass: MyM
   };
 
 };
+
+
+
+export function get_distance_haversine_distance(params: {
+  from_lat: number;
+  from_lng: number;
+  to_lat: number;
+  to_lng: number;
+}) {
+  /*  
+    https://developers.google.com/maps/documentation/distance-matrix/overview#DistanceMatrixRequests
+    https://cloud.google.com/blog/products/maps-platform/how-calculate-distances-map-maps-javascript-api
+  */
+  var M = 3958.8; // Radius of the Earth in miles
+  var K = 6371.0710; // Radius of the Earth in kilometers
+
+  var rlat1 = params.from_lat * (Math.PI/180); // Convert degrees to radians
+  var rlat2 = params.to_lat * (Math.PI/180); // Convert degrees to radians
+  var difflat = rlat2-rlat1; // Radian difference (latitudes)
+  var difflon = (params.to_lng - params.from_lng) * (Math.PI/180); // Radian difference (longitudes)
+
+  var d = 2 * M * Math.asin(
+    Math.sqrt(
+      Math.sin(difflat/2) * Math.sin(difflat/2) + Math.cos(rlat1) * Math.cos(rlat2) * Math.sin(difflon/2) * Math.sin(difflon/2)
+    )
+  );
+  return d;
+}

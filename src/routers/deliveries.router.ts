@@ -106,7 +106,8 @@ DeliveriesRouter.post('/:delivery_id/accept-request-carrier-location', YouAuthor
 DeliveriesRouter.post('/:delivery_id/decline-request-carrier-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryCarrier, DeliveryNotCompleted, IsNotDeliveryCarrierLocationRequestCompleted, DeliveriesRequestHandler.decline_request_carrier_location);
 DeliveriesRouter.post('/:delivery_id/carrier-share-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryCarrier, DeliveryNotCompleted, IsNotDeliveryCarrierLocationRequestCompleted, DeliveriesRequestHandler.carrier_share_location);
 DeliveriesRouter.post('/:delivery_id/carrier-unshare-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryCarrier, DeliveryNotCompleted,IsDeliveryCarrierLocationRequestCompleted, DeliveriesRequestHandler.carrier_unshare_location);
-DeliveriesRouter.post('/:delivery_id/carrier-update-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryCarrier, DeliveryNotCompleted, IsDeliveryCarrierLocationRequestCompleted, DeliveriesRequestHandler.carrier_update_location);
+//  update location
+DeliveriesRouter.post('/:delivery_id/carrier-update-location', YouAuthorizedSlim, DeliveryExists, IsDeliveryCarrier, DeliveryNotCompleted, DeliveriesRequestHandler.carrier_update_location);
 
 DeliveriesRouter.post('/:delivery_id/create-delivery-dispute', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeNotExistsSlim, DeliveriesRequestHandler.create_delivery_dispute);
 DeliveriesRouter.post('/:delivery_id/create-delivery-dispute-log', YouAuthorizedSlim, DeliveryExists, IsDeliveryOwnerOrCarrier, DeliveryNotCompleted, DeliveryDisputeExistsSlim, DeliveryDisputeStatusOpen, DeliveriesRequestHandler.create_delivery_dispute_log);

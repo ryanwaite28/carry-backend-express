@@ -489,6 +489,22 @@ export const ListingsAlertsLastPushed = <MyModelStatic> sequelize.define('carry_
 
 // UserNewListingsAlerts.sync({ alter: true }); 
 
+export const DeliveryCarrierPickupApproachingNotifications = <MyModelStatic> sequelize.define('carry_delivery_carrier_pickup_approaching_notifications', {
+  id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  delivery_id:        { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
+  carrier_id:         { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },  
+  date_created:       { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
+export const DeliveryCarrierDropoffApproachingNotifications = <MyModelStatic> sequelize.define('carry_delivery_carrier_dropoff_approaching_notifications', {
+  id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  delivery_id:        { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
+  carrier_id:         { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },  
+  date_created:       { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:               { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 }
+}, common_options);
+
 export const DeliveryCarrierTrackLocationRequests = <MyModelStatic> sequelize.define('carry_delivery_carrier_track_location_requests', {
   id:                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
   delivery_id:        { type: Sequelize.INTEGER, allowNull: false, references: { model: Delivery, key: 'id' } },
@@ -847,6 +863,11 @@ DeliveryTrackingUpdates.belongsTo(Users, { as: 'user', foreignKey: 'user_id', ta
 
 Delivery.hasOne(DeliveryInsurances, { as: 'delivery_insurance', foreignKey: 'delivery_id', sourceKey: 'id' });
 DeliveryInsurances.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
+
+Delivery.hasOne(DeliveryCarrierPickupApproachingNotifications, { as: 'carrier_pickup_approaching', foreignKey: 'delivery_id', sourceKey: 'id' });
+DeliveryCarrierPickupApproachingNotifications.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
+Delivery.hasOne(DeliveryCarrierDropoffApproachingNotifications, { as: 'carrier_dropoff_approaching', foreignKey: 'delivery_id', sourceKey: 'id' });
+DeliveryCarrierDropoffApproachingNotifications.belongsTo(Delivery, { as: 'delivery', foreignKey: 'delivery_id', targetKey: 'id' });
 
 Users.hasMany(DeliveryMessages, { as: 'delivery_messages_sent', foreignKey: 'user_id', sourceKey: 'id' });
 DeliveryMessages.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });

@@ -563,8 +563,8 @@ export class DeliveriesRequestHandler {
     const options = {
       you: response.locals.you as IUser,
       delivery: response.locals.delivery_model as IDelivery,
-      carrier_latest_lat: request.body.lat as number,
-      carrier_latest_lng: request.body.lng as number,
+      carrier_latest_lat: request.body.carrier_latest_lat as number,
+      carrier_latest_lng: request.body.carrier_latest_lng as number,
     };
     const serviceMethodResults: ServiceMethodResults = await DeliveriesService.carrier_update_location(options);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
