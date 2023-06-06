@@ -2024,10 +2024,10 @@ export class UsersService {
 
     }
 
-    const ephemeral_key: Stripe.EphemeralKey = await StripeService.stripe.ephemeralKeys.create(
-      { verification_session: verification_session_id },
-      { apiVersion: '2020-08-27' }
-    );
+    // const ephemeral_key: Stripe.EphemeralKey = await StripeService.stripe.ephemeralKeys.create(
+    //   { verification_session: verification_session_id },
+    //   { apiVersion: '2020-08-27' }
+    // );
 
     const useUploadUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/stripe-identity-verification-upload?stripe_pk=${AppEnvironment.API_KEYS.STRIPE_PK}&verification_session_client_secret=${verification_session_client_secret}&return_url=${useReturnUrl}`;
 
@@ -2041,8 +2041,8 @@ export class UsersService {
           useReturnUrl,
           verification_session_id,
           verification_session_client_secret,
-          ephemeral_key_secret: ephemeral_key.secret,
-          ephemeral_key,
+          // ephemeral_key_secret: ephemeral_key.secret,
+          // ephemeral_key,
         }
       }
     };
