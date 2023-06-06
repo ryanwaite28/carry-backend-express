@@ -59,6 +59,14 @@ export interface IUserExpoDevice extends ICommonModel {
   device_platform:      string,
 }
 
+export interface IUserStripeIdentityVerificationSession extends ICommonModel {
+  user_id:                     number,
+  verification_session_id:     string,
+  expired:                     boolean,
+  verified:                    boolean,
+  status:                      string,
+}
+
 
 export interface IUser extends ICommonModel {
   gender:                      number,
@@ -74,6 +82,7 @@ export interface IUser extends ICommonModel {
   stripe_customer_account_id:  string,
   stripe_account_id:           string,
   stripe_account_verified:     boolean,
+  stripe_identity_verified:     boolean,
   platform_subscription_id:    string,
   phone:                       string,
   temp_phone:                  string,

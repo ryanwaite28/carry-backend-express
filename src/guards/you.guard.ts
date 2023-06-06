@@ -5,6 +5,7 @@ import { Users } from '../models/delivery.model';
 import { get_user_by_id } from '../repos/users.repo';
 import { user_attrs_slim } from '../utils/constants.utils';
 import { AuthorizeJWT } from '../utils/helpers.utils';
+import { daysPast, hoursPast } from 'src/utils/date.utils';
 
 
 
@@ -53,6 +54,58 @@ export function YouAuthorized(
   response.locals.you = auth.you;
   return next();
 }
+
+export function YouStripeIdentityIsVerified(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const you: IUser = response.locals.you;
+
+  if (!you.stripe_identity_verified) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Stripe Identity not verified`
+    });
+  }
+
+  return next();
+}
+
+export function YouStripeIdentityIsNotVerified(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const you: IUser = response.locals.you;
+
+  if (you.stripe_identity_verified) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Stripe Identity is verified`
+    });
+  }
+
+  return next();
+}
+
+export function YouStripeIdentityIsVerifiedAfter3DaysSinceSignup(
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const you: IUser = response.locals.you;
+
+  const userSignedUp3DaysAgo = daysPast(you.date_created) >= 3;
+  const notIdentityVerifiedAfter3DaysSinceSignup = userSignedUp3DaysAgo && !you.stripe_identity_verified;
+
+  if (notIdentityVerifiedAfter3DaysSinceSignup) {
+    return response.status(HttpStatusCode.FORBIDDEN).json({
+      message: `Identity not verified. It has been 3 days since signup, your identity is now required to continue using the platform.`
+    });
+  }
+
+  return next();
+}
+
 export function YouAuthorizedSlim(
   request: Request,
   response: Response,

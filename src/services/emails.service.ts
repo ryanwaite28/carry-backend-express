@@ -2,6 +2,10 @@ import { compile } from 'handlebars';
 import { join } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { AppEnvironment } from 'src/utils/app.enviornment';
+import { sendAwsEmail } from 'src/utils/ses.aws.utils';
+import { getUserFullName } from 'src/utils/helpers.utils';
+import { IUser } from 'src/interfaces/carry.interface';
+import { LOGGER } from 'src/utils/logger.utils';
 
 
 
@@ -27,6 +31,8 @@ const get_html_file_as_string = (construct: string, filename: string) => {
 
 export class HandlebarsEmailsService {
 
+  // Configs
+
   public static readonly USERS = {
     welcome: {
       subject: `Welcome to ${AppEnvironment.APP_NAME.DISPLAY}!`,
@@ -45,6 +51,15 @@ export class HandlebarsEmailsService {
       template: compile(get_html_file_as_string('users', 'password_reset_success.html')),
     },
 
+    identity_verification_session_canceled: {
+      subject: `${AppEnvironment.APP_NAME.DISPLAY} - Identity Verification Session Canceled`,
+      template: compile(get_html_file_as_string('users', 'identity_verification_session_canceled.html')),
+    },
+    identity_verification_session_verified: {
+      subject: `${AppEnvironment.APP_NAME.DISPLAY} - Identity Verified`,
+      template: compile(get_html_file_as_string('users', 'identity_verification_session_verified.html')),
+    },
+
     customer_unpaid_listing: {
       subject: (delivery_title: string) => `${AppEnvironment.APP_NAME.DISPLAY} - Unpaid delivery listing: ${delivery_title}`,
       template: compile(get_html_file_as_string('users', 'customer_unpaid_listing.html')),
@@ -57,5 +72,43 @@ export class HandlebarsEmailsService {
       template: compile(get_html_file_as_string('internal', 'new_delivery_dispute.html')),
     },
   };
+
+
+
+  // Helpers
+
+  static send_identity_verification_session_canceled(user: IUser) {
+    return sendAwsEmail({
+      to: user.email,
+      subject: HandlebarsEmailsService.USERS.identity_verification_session_canceled.subject,
+      html: HandlebarsEmailsService.USERS.identity_verification_session_canceled.template({
+        user_name: getUserFullName(user),
+        app_name: AppEnvironment.APP_NAME.DISPLAY
+      })
+    })
+    .then((results) => {
+      LOGGER.info(`Sent identity verification session canceled email.`);
+    })
+    .catch((error) => {
+      LOGGER.error(`Could not send identity verification session canceled email...`);
+    });
+  }
+
+  static send_identity_verification_session_verified(user: IUser) {
+    return sendAwsEmail({
+      to: user.email,
+      subject: HandlebarsEmailsService.USERS.identity_verification_session_verified.subject,
+      html: HandlebarsEmailsService.USERS.identity_verification_session_verified.template({
+        user_name: getUserFullName(user),
+        app_name: AppEnvironment.APP_NAME.DISPLAY
+      })
+    })
+    .then((results) => {
+      LOGGER.info(`Sent identity verification session verified email.`);
+    })
+    .catch((error) => {
+      LOGGER.error(`Could not send identity verification session verified email...`);
+    });
+  }
 
 }

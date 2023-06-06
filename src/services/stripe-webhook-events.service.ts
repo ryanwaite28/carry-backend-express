@@ -1,15 +1,29 @@
-import { Request, Response } from 'express';
-import { get_user_by_stripe_connected_account_id, get_user_by_stripe_customer_account_id } from '../repos/users.repo';
-import Stripe from 'stripe';
-import { HttpStatusCode } from '../enums/http-codes.enum';
-import { UsersService } from './users.service';
-import { create_delivery_unpaid_listing, delete_delivery, get_delivery_by_id, get_delivery_by_payment_intent_id, get_delivery_dispute_by_delivery_id } from 'src/repos/deliveries.repo';
-import { LOGGER } from 'src/utils/logger.utils';
-import { StripeService } from './stripe.service';
-import { sendAwsEmail } from 'src/utils/ses.aws.utils';
-import { HandlebarsEmailsService } from './emails.service';
-import { AppEnvironment } from 'src/utils/app.enviornment';
-import { ExpoPushNotificationsService } from './expo-notifications.service';
+import { Request, Response } from "express";
+import {
+  delete_user_stripe_identity_verification_session_by_session_id,
+  get_user_by_id,
+  get_user_by_stripe_connected_account_id,
+  get_user_by_stripe_customer_account_id,
+  update_user_by_id,
+  verify_user_stripe_identity_verification_session_by_session_id,
+} from "../repos/users.repo";
+import Stripe from "stripe";
+import { HttpStatusCode } from "../enums/http-codes.enum";
+import { UsersService } from "./users.service";
+import {
+  create_delivery_unpaid_listing,
+  delete_delivery,
+  get_delivery_by_id,
+  get_delivery_by_payment_intent_id,
+  get_delivery_dispute_by_delivery_id,
+} from "src/repos/deliveries.repo";
+import { LOGGER } from "src/utils/logger.utils";
+import { StripeService } from "./stripe.service";
+import { sendAwsEmail } from "src/utils/ses.aws.utils";
+import { HandlebarsEmailsService } from "./emails.service";
+import { AppEnvironment } from "src/utils/app.enviornment";
+import { ExpoPushNotificationsService } from "./expo-notifications.service";
+import { IUser } from "src/interfaces/carry.interface";
 
 
 
@@ -274,10 +288,34 @@ export class StripeWebhookEventsRequestHandler {
         var file = event.data.object;
         // Then define and call a function to handle the event file.created
         break;
-      case 'identity.verification_session.canceled':
-        var identityVerificationSession = event.data.object;
+      case 'identity.verification_session.canceled': {
         // Then define and call a function to handle the event identity.verification_session.canceled
+        const identityVerificationSession: Stripe.Identity.VerificationSession = event.data.object;
+        // delete database reference
+        delete_user_stripe_identity_verification_session_by_session_id(identityVerificationSession.id)
+        .then(async () => {
+          if (!identityVerificationSession.metadata['user_id']) {
+            LOGGER.error(`User ID was not attached to identity verification session's metadata; should have been set upon creation...`, { identityVerificationSession });
+            return;
+          }
+          const user_id = parseInt(identityVerificationSession.metadata['user_id']);
+          const user: IUser = await get_user_by_id(user_id);
+          if (!user) {
+            LOGGER.error(`User not found by ID from identity verification session's metadata...`, { user_id, identityVerificationSession });
+            return;
+          }
+          // send email
+          HandlebarsEmailsService.send_identity_verification_session_canceled(user);
+          ExpoPushNotificationsService.sendUserPushNotification({
+            user_id,
+            message: `Stripe Identity verification process was canceled. Please go to settings and complete identity verification.`
+          });
+        })
+        .catch((error) => {
+          LOGGER.error(`Could not notify user of identity verification session canceled...`, { error, identityVerificationSession });
+        });
         break;
+      }
       case 'identity.verification_session.created':
         var identityVerificationSession = event.data.object;
         // Then define and call a function to handle the event identity.verification_session.created
@@ -294,10 +332,36 @@ export class StripeWebhookEventsRequestHandler {
         var identityVerificationSession = event.data.object;
         // Then define and call a function to handle the event identity.verification_session.requires_input
         break;
-      case 'identity.verification_session.verified':
-        var identityVerificationSession = event.data.object;
+      case 'identity.verification_session.verified': {
         // Then define and call a function to handle the event identity.verification_session.verified
+        const identityVerificationSession: Stripe.Identity.VerificationSession = event.data.object;
+        // delete database reference
+        verify_user_stripe_identity_verification_session_by_session_id(identityVerificationSession.id)
+        .then(async () => {
+          if (!identityVerificationSession.metadata['user_id']) {
+            LOGGER.error(`User ID was not attached to identity verification session's metadata; should have been set upon creation...`, { identityVerificationSession });
+            return;
+          }
+          const user_id = parseInt(identityVerificationSession.metadata['user_id']);
+          const user: IUser = await get_user_by_id(user_id);
+          if (!user) {
+            LOGGER.error(`User not found by ID from identity verification session's metadata...`, { user_id, identityVerificationSession });
+            return;
+          }
+          // mark them as identified
+          await update_user_by_id(user_id, { stripe_identity_verified: true });
+          // send email
+          HandlebarsEmailsService.send_identity_verification_session_verified(user);
+          ExpoPushNotificationsService.sendUserPushNotification({
+            user_id,
+            message: `Stripe Identity verification process completed, you are verified!`
+          });
+        })
+        .catch((error) => {
+          LOGGER.error(`Could not notify user of identity verification session verified...`, { error, identityVerificationSession });
+        });
         break;
+      }
       case 'invoice.created':
         var invoice = event.data.object;
         // Then define and call a function to handle the event invoice.created

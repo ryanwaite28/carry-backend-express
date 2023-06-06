@@ -3,8 +3,10 @@ import Stripe from 'stripe';
 
 
 
+export const STRIPE_SDK_API_VERSION: '2022-11-15' = '2022-11-15';
+
 const stripe: Stripe = new Stripe(process.env.STRIPE_SK!, {
-  apiVersion: '2022-11-15',
+  apiVersion: STRIPE_SDK_API_VERSION,
 });
 
 

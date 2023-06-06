@@ -83,7 +83,6 @@ export interface ICarryUserRating extends ICommonModel {
 
 
 
-
 export interface IDelivery extends ICommonModel {
   owner_id: number,
   

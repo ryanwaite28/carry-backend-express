@@ -13,7 +13,7 @@ import { IUser, IUserSubscriptionInfo } from '../interfaces/carry.interface';
 import { ResetPasswordRequests, SiteFeedbacks, Users } from '../models/delivery.model';
 import { get_user_unseen_notifications_count } from '../repos/notifications.repo';
 import { ExpoPushNotificationsService } from './expo-notifications.service';
-import { StripeService } from './stripe.service';
+import { STRIPE_SDK_API_VERSION, StripeService } from './stripe.service';
 import Stripe from 'stripe';
 import { create_card_payment_method_required_props } from '../utils/constants.utils';
 import { validateEmail, validatePassword } from '../utils/validators.utils';
@@ -1981,6 +1981,69 @@ export class UsersService {
       info: {
         message: `Device removed`,
         data: removed
+      }
+    };
+    return serviceMethodResults;
+  }
+
+  static async create_stripe_identity_verification_session(user_id: number, redirectUrl?: string): ServiceMethodAsyncResults {
+    let verification_session_id: string;
+    let verification_session_client_secret: string;
+    
+    const useReturnUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/stripe-identity-verification-return?appDeepLinkRedirectURL=${redirectUrl}`;
+
+    // check if user has started a session before
+    const check_user_verification_session = await UserRepo.check_user_stripe_identity_verification_session(user_id);
+    if (check_user_verification_session) {
+
+      verification_session_id = check_user_verification_session.verification_session_id;
+
+      const verification_session: Stripe.Identity.VerificationSession = await StripeService.stripe.identity.verificationSessions.retrieve(verification_session_id);
+
+      verification_session_client_secret = verification_session.client_secret;
+      
+    }
+    else {
+      
+      const verification_session: Stripe.Identity.VerificationSession = await StripeService.stripe.identity.verificationSessions.create({
+        type: 'document',
+        return_url: useReturnUrl,
+        metadata: {
+          timestamp: Date.now(),
+          user_id,
+        },
+      });
+      
+      verification_session_id = verification_session.id;
+      verification_session_client_secret = verification_session.client_secret;
+      
+      await UserRepo.create_user_stripe_identity_verification_session({
+        user_id,
+        verification_session_id: verification_session.id
+      });
+
+    }
+
+    const ephemeral_key: Stripe.EphemeralKey = await StripeService.stripe.ephemeralKeys.create(
+      { verification_session: verification_session_id },
+      { apiVersion: '2020-08-27' }
+    );
+
+    const useUploadUrl = `${AppEnvironment.USE_CLIENT_DOMAIN_URL}/stripe-identity-verification-upload?stripe_pk=${AppEnvironment.API_KEYS.STRIPE_PK}&verification_session_client_secret=${verification_session_client_secret}&return_url=${useReturnUrl}`;
+
+    const serviceMethodResults: ServiceMethodResults = {
+      status: HttpStatusCode.OK,
+      error: false,
+      info: {
+        data: {
+          stripe_pk: AppEnvironment.API_KEYS.STRIPE_PK,
+          useUploadUrl,
+          useReturnUrl,
+          verification_session_id,
+          verification_session_client_secret,
+          ephemeral_key_secret: ephemeral_key.secret,
+          ephemeral_key,
+        }
       }
     };
     return serviceMethodResults;

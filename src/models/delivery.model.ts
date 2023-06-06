@@ -30,6 +30,7 @@ export const Users = <MyModelStatic> sequelize.define('carry_users', {
   stripe_customer_account_id:          { type: Sequelize.STRING, allowNull: true },
   stripe_account_id:                   { type: Sequelize.STRING, allowNull: true },
   stripe_account_verified:             { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+  stripe_identity_verified:            { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
   platform_subscription_id:            { type: Sequelize.STRING, allowNull: true, defaultValue: null },
   temp_phone:                          { type: Sequelize.STRING, allowNull: true, defaultValue: '' },
   phone:                               { type: Sequelize.STRING, allowNull: true },
@@ -116,6 +117,19 @@ export const UserFields = <MyModelStatic> sequelize.define('carry_user_fields', 
   date_created:         { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
   uuid:                 { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 },
 }, common_options);
+
+export const UserStripeIdentityVerificationSessions = <MyModelStatic> sequelize.define('carry_user_stripe_identity_verification_sessions', {
+  id:                                 { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id:                            { type: Sequelize.INTEGER, allowNull: false, references: { model: Users, key: 'id' } },
+  verification_session_id:            { type: Sequelize.STRING, allowNull: false },
+  expired:                            { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+  verified:                           { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+  status:                             { type: Sequelize.STRING, allowNull: false, defaultValue: '' },
+  date_created:         { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+  uuid:                 { type: Sequelize.STRING, defaultValue: Sequelize.UUIDV1 },
+}, common_options);
+
+// UserStripeIdentityVerificationSessions.sync({ alter: true });
 
 export const UsersEmailVerifications = <MyModelStatic> sequelize.define('carry_users_email_verifications', {
   id:                      { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },

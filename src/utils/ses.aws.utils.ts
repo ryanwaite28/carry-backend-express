@@ -1,4 +1,4 @@
-import { SESClient, SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
+import { SESClient, SendEmailCommand, SendEmailCommandInput, SendEmailCommandOutput } from "@aws-sdk/client-ses";
 import { AppEnvironment } from "./app.enviornment";
 import { isLocal } from "./constants.utils";
 import { LOGGER } from "./logger.utils";
@@ -12,11 +12,12 @@ export function sendAwsEmail(params: {
   message?: string,
   html?: string,
   forceInLocal?: boolean
-}) {
+}): Promise<SendEmailCommandOutput> {
   if (!params.forceInLocal && isLocal) {
     LOGGER.info(`Is local, not sending email...`, { isLocal, params });
-    return Promise.resolve();
+    return Promise.resolve({} as any);
   }
+
   const sendCommandParams: SendEmailCommandInput = {
     Source: AppEnvironment.AWS.SES.EMAIL,
     Destination: {
@@ -37,15 +38,16 @@ export function sendAwsEmail(params: {
   };
   LOGGER.info(`Sending email via AWS SES:`, { params, sendCommandParams });
   const command = new SendEmailCommand(sendCommandParams);
+  
   return aws_ses_client.send(command)
-    .then((results) => {
-      LOGGER.info(`Email AWS SES send results:`, results);
-      return results;
-    })
-    .catch((error) => {
-      LOGGER.info(`Email AWS SES send error:`, error);
-      return error;
-    });
+  .then((results) => {
+    LOGGER.info(`Email AWS SES send results:`, { results });
+    return results;
+  })
+  .catch((error) => {
+    LOGGER.error(`Email AWS SES send error:`, { error });
+    return error;
+  });
 }
 
 export function sendAwsInternalEmail(params: {
@@ -78,13 +80,14 @@ export function sendAwsInternalEmail(params: {
   };
   LOGGER.info(`Sending email via AWS SES:`, { params, sendCommandParams });
   const command = new SendEmailCommand(sendCommandParams);
+  
   return aws_ses_client.send(command)
-    .then((results) => {
-      LOGGER.info(`Email AWS SES send results:`, results);
-      return results;
-    })
-    .catch((error) => {
-      LOGGER.info(`Email AWS SES send error:`, error);
-      return error;
-    });
+  .then((results) => {
+    LOGGER.info(`Email AWS SES send results:`, { results });
+    return results;
+  })
+  .catch((error) => {
+    LOGGER.error(`Email AWS SES send error:`, { error });
+    return error;
+  });
 }

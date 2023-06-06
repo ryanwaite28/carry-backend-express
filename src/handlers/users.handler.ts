@@ -259,6 +259,14 @@ export class UsersRequestHandler {
     const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_account(you.id, redirectUrl);
     return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
   }
+
+  static async create_stripe_identity_verification_session(request: Request, response: Response): ExpressResponse {
+    const you: IUser = response.locals.you;
+    console.log(`UsersRequestHandler.create_stripe_identity_verification_session:`, { you });
+    // const 
+    const serviceMethodResults: ServiceMethodResults = await UsersService.create_stripe_identity_verification_session(you.id);
+    return response.status(serviceMethodResults.status).json(serviceMethodResults.info);
+  }
   
   
   static async verify_stripe_account(request: Request, response: Response): ExpressResponse {

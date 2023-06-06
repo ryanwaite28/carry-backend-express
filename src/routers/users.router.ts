@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { UserExists, UserIdsAreDifferent, YouAuthorized, YouAuthorizedSlim } from '../guards/you.guard';
+import { UserExists, UserIdsAreDifferent, YouAuthorized, YouAuthorizedSlim, YouStripeIdentityIsNotVerified, YouStripeIdentityIsVerifiedAfter3DaysSinceSignup } from '../guards/you.guard';
 import { DeliveryExists, DeliveryHasNoCarrierAssigned, IsDeliveryCarrier } from '../guards/delivery.guard';
 import { DeliveriesRequestHandler } from '../handlers/deliveries.handler';
 import { UsersRequestHandler } from '../handlers/users.handler';
@@ -80,6 +80,7 @@ UsersRouter.put('/:you_id/wallpaper', YouAuthorized, UsersRequestHandler.update_
 UsersRouter.put('/:you_id/register-expo-push-token', YouAuthorized, UsersRequestHandler.register_expo_device_and_push_token);
 UsersRouter.put('/:you_id/create-stripe-account', YouAuthorized, UsersRequestHandler.create_stripe_account);
 UsersRouter.put('/:you_id/verify-stripe-account', YouAuthorized, UsersRequestHandler.verify_stripe_account);
+UsersRouter.put('/:you_id/create-stripe-identity-verification-session', YouAuthorized, YouStripeIdentityIsNotVerified, UsersRequestHandler.create_stripe_identity_verification_session);
 UsersRouter.put('/:user_uuid/verify-stripe-account-by-uuid', UsersRequestHandler.verify_stripe_account_by_uuid);
 UsersRouter.put('/:you_id/verify-customer-has-cards', YouAuthorized, UsersRequestHandler.verify_customer_has_card_payment_method);
 

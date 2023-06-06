@@ -1,19 +1,37 @@
+import { fn, Op, WhereOptions } from "sequelize";
 import {
-  fn,
-  Op,
-  WhereOptions
-} from 'sequelize';
-import { IUser, IUserExpoDevice, IMyModel, IApiKey, IResetPasswordRequest, IUserNewListingsAlert } from '../interfaces/carry.interface';
-import { PlainObject } from '../interfaces/common.interface';
-import { Users, ResetPasswordRequests, UserExpoDevices, ApiKeys, UserNewListingsAlerts } from '../models/delivery.model';
-import { user_attrs_slim } from '../utils/constants.utils';
-import { convertModelCurry, convertModelsCurry, convertModel, create_model_crud_repo_from_model_class } from '../utils/helpers.utils';
+  IUser,
+  IUserExpoDevice,
+  IMyModel,
+  IApiKey,
+  IResetPasswordRequest,
+  IUserNewListingsAlert,
+  IUserStripeIdentityVerificationSession,
+} from "../interfaces/carry.interface";
+import { PlainObject } from "../interfaces/common.interface";
+import {
+  Users,
+  ResetPasswordRequests,
+  UserExpoDevices,
+  ApiKeys,
+  UserNewListingsAlerts,
+  UserStripeIdentityVerificationSessions,
+} from "../models/delivery.model";
+import { user_attrs_slim } from "../utils/constants.utils";
+import {
+  convertModelCurry,
+  convertModelsCurry,
+  convertModel,
+  create_model_crud_repo_from_model_class,
+} from "../utils/helpers.utils";
 
 
 
 
+const users_crud = create_model_crud_repo_from_model_class<IUser>(Users);
 const user_password_reset_request_crud = create_model_crud_repo_from_model_class<IResetPasswordRequest>(ResetPasswordRequests);
 const user_new_listings_alerts_crud = create_model_crud_repo_from_model_class<IUserNewListingsAlert>(UserNewListingsAlerts);
+const user_stripe_identity_verification_session_crud = create_model_crud_repo_from_model_class<IUserStripeIdentityVerificationSession>(UserStripeIdentityVerificationSessions);
 
 
 const convertUserModel = convertModelCurry<IUser>();
@@ -139,6 +157,10 @@ export async function get_user_by_phone(
     console.log(`get_user_by_phone error - `, e);
     return null;
   }
+}
+
+export function update_user_by_id(id: number, updatesObj: any) {
+  return users_crud.updateById(id, updatesObj);
 }
 
 export async function get_user_by_temp_phone(
@@ -455,4 +477,25 @@ export function get_user_new_listings_alerts(user_id: number, listing_alert_id?:
     min_id: listing_alert_id,
     orderBy: [['id', 'DESC']]
   });
+}
+
+
+
+export function check_user_stripe_identity_verification_session(user_id: number) {
+  return user_stripe_identity_verification_session_crud.findOne({ where: { user_id } });
+}
+
+export function create_user_stripe_identity_verification_session(params: {
+  user_id:                     number,
+  verification_session_id:     string,
+}) {
+  return user_stripe_identity_verification_session_crud.create(params);
+}
+
+export function verify_user_stripe_identity_verification_session_by_session_id(verification_session_id: string) {
+  return user_stripe_identity_verification_session_crud.update({ verified: true }, { where: { verification_session_id } });
+}
+
+export function delete_user_stripe_identity_verification_session_by_session_id(verification_session_id: string) {
+  return user_stripe_identity_verification_session_crud.destroy({ where: { verification_session_id } });
 }
