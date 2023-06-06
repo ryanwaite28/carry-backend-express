@@ -7,6 +7,7 @@ import { generateJWT } from '../utils/helpers.utils';
 import axios from 'axios';
 import { HttpStatusCode } from '../enums/http-codes.enum';
 import { ServiceMethodResults, ServiceMethodAsyncResults, IPositionStackLocationData } from '../interfaces/common.interface';
+import { AppEnvironment } from 'src/utils/app.enviornment';
 
 
 
@@ -133,7 +134,7 @@ export class UtilsService {
       return serviceMethodResults;
     }
 
-    const endpoint: string = `${positionstack_api}/reverse?access_key=${process.env.POSITIONSTACK_APIKEY}&query=${lat},${lng}&limit=1&output=json`;
+    const endpoint: string = `${positionstack_api}/reverse?access_key=${AppEnvironment.API_KEYS.POSITIONSTACK}&query=${lat},${lng}&limit=1&output=json`;
     
     try {
       const response = await axios.request({

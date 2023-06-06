@@ -20,3 +20,4 @@ UtilsRouter.post('/get-stripe-public-key', UtilsRequestHandler.get_stripe_public
 UtilsRouter.put('/get-google-api-key', UtilsRequestHandler.get_google_maps_key);
 UtilsRouter.put('/get-stripe-public-key', UtilsRequestHandler.get_stripe_public_key);
 UtilsRouter.put('/get-location-via-coordinates/:lat/:lng', UtilsRequestHandler.get_location_via_coordinates);
+// UtilsRouter.put('/get-location-via-coordinates-google/:lat/:lng', UtilsRequestHandler.get_location_via_coordinates_google);
