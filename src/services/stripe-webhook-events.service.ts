@@ -24,6 +24,8 @@ import { HandlebarsEmailsService } from "./emails.service";
 import { AppEnvironment } from "src/utils/app.enviornment";
 import { ExpoPushNotificationsService } from "./expo-notifications.service";
 import { IUser } from "src/interfaces/carry.interface";
+import { CommonSocketEventsHandler } from "./common.socket-event-handler";
+import { CARRY_EVENT_TYPES } from "src/enums/carry.enum";
 
 
 
@@ -306,6 +308,15 @@ export class StripeWebhookEventsRequestHandler {
           }
           // send email
           HandlebarsEmailsService.send_identity_verification_session_canceled(user);
+          
+          // send socket event
+          CommonSocketEventsHandler.emitEventToUserSockets({
+            user_id,
+            event: CARRY_EVENT_TYPES.STRIPE_IDENTITY_VERIFICATION_SESSION_CANCELED,
+            event_data: {},
+          });
+
+          // send push notification
           ExpoPushNotificationsService.sendUserPushNotification({
             user_id,
             message: `Stripe Identity verification process was canceled. Please go to settings and complete identity verification.`
@@ -335,7 +346,7 @@ export class StripeWebhookEventsRequestHandler {
       case 'identity.verification_session.verified': {
         // Then define and call a function to handle the event identity.verification_session.verified
         const identityVerificationSession: Stripe.Identity.VerificationSession = event.data.object;
-        // delete database reference
+        // marking session as verified
         verify_user_stripe_identity_verification_session_by_session_id(identityVerificationSession.id)
         .then(async () => {
           if (!identityVerificationSession.metadata['user_id']) {
@@ -348,10 +359,19 @@ export class StripeWebhookEventsRequestHandler {
             LOGGER.error(`User not found by ID from identity verification session's metadata...`, { user_id, identityVerificationSession });
             return;
           }
-          // mark them as identified
-          await update_user_by_id(user_id, { stripe_identity_verified: true });
+          // mark user as identity verified
+          update_user_by_id(user_id, { stripe_identity_verified: true });
           // send email
           HandlebarsEmailsService.send_identity_verification_session_verified(user);
+
+          // send socket event
+          CommonSocketEventsHandler.emitEventToUserSockets({
+            user_id,
+            event: CARRY_EVENT_TYPES.STRIPE_IDENTITY_VERIFIED,
+            event_data: {},
+          });
+
+          // send push notification
           ExpoPushNotificationsService.sendUserPushNotification({
             user_id,
             message: `Stripe Identity verification process completed, you are verified!`

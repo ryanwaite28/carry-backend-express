@@ -482,7 +482,7 @@ export function get_user_new_listings_alerts(user_id: number, listing_alert_id?:
 
 
 export function check_user_stripe_identity_verification_session(user_id: number) {
-  return user_stripe_identity_verification_session_crud.findOne({ where: { user_id } });
+  return user_stripe_identity_verification_session_crud.findOne({ where: { user_id, verified: false } });
 }
 
 export function create_user_stripe_identity_verification_session(params: {
