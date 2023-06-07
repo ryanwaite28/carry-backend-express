@@ -674,7 +674,7 @@ export class UsersService {
       sendAwsEmail({
         to: new_user.email,
         html: email_html,
-        subject: AppEnvironment.APP_NAME.DISPLAY,
+        subject: HandlebarsEmailsService.USERS.welcome.subject,
       });
     }
     catch (e) {
