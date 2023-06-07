@@ -814,9 +814,9 @@ Users.hasOne(CarryUserProfileSettings, { as: 'carry_settings', foreignKey: 'user
 CarryUserProfileSettings.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
 
 
-Users.hasOne(CarryUserRatings, { as: 'carry_received_ratings', foreignKey: 'user_id', sourceKey: 'id' });
+Users.hasMany(CarryUserRatings, { as: 'carry_received_ratings', foreignKey: 'user_id', sourceKey: 'id' });
 CarryUserRatings.belongsTo(Users, { as: 'user', foreignKey: 'user_id', targetKey: 'id' });
-Users.hasOne(CarryUserRatings, { as: 'carry_written_ratings', foreignKey: 'writer_id', sourceKey: 'id' });
+Users.hasMany(CarryUserRatings, { as: 'carry_written_ratings', foreignKey: 'writer_id', sourceKey: 'id' });
 CarryUserRatings.belongsTo(Users, { as: 'writer', foreignKey: 'writer_id', targetKey: 'id' });
 
 Users.hasMany(CarryUserCustomerRatings, { as: 'carry_received_customer_ratings', foreignKey: 'user_id', sourceKey: 'id' });
