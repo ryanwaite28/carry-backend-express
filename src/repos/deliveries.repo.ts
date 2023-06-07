@@ -293,7 +293,7 @@ export const deliveryDisputeMasterIncludes: Includeable[] = [
   },
   {
     model: DeliveryDisputeSettlementInvoices,
-    as: `delivery_dispute_settlement_invoices`,
+    as: `delivery_dispute_settlement_invoice`,
     include: [
       {
         model: Users,

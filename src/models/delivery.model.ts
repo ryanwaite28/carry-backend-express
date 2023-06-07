@@ -908,7 +908,7 @@ DeliveryDisputeCustomerSupportMessages.belongsTo(CarryAdmins, { as: 'agent', for
 DeliveryDisputes.hasMany(DeliveryDisputeSettlementOffers, { as: 'delivery_dispute_settlement_offers', foreignKey: 'dispute_id', sourceKey: 'id' });
 DeliveryDisputeSettlementOffers.belongsTo(DeliveryDisputes, { as: 'dispute', foreignKey: 'dispute_id', targetKey: 'id' });
 
-DeliveryDisputes.hasOne(DeliveryDisputeSettlementInvoices, { as: 'delivery_dispute_settlement_invoices', foreignKey: 'dispute_id', sourceKey: 'id' });
+DeliveryDisputes.hasOne(DeliveryDisputeSettlementInvoices, { as: 'delivery_dispute_settlement_invoice', foreignKey: 'dispute_id', sourceKey: 'id' });
 DeliveryDisputeSettlementInvoices.belongsTo(DeliveryDisputes, { as: 'dispute', foreignKey: 'dispute_id', targetKey: 'id' });
 
 
