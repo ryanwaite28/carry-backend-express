@@ -12,13 +12,13 @@ import { LOGGER } from 'src/utils/logger.utils';
 const get_html_file_as_string = (construct: string, filename: string) => {
   let html_file_path = join(__dirname, 'assets', 'email-templates', construct, filename);
   let fileExists = existsSync(html_file_path);
-  console.log(`html_file_path:`, { html_file_path, fileExists });
+  // console.log(`html_file_path:`, { html_file_path, fileExists });
   if (!fileExists) {
     console.log(`File does not exist, trying parent directory...`);
     html_file_path = join(__dirname, '../', 'assets', 'email-templates', construct, filename);
     fileExists = existsSync(html_file_path);
 
-    console.log(`html_file_path:`, { html_file_path, fileExists });
+    // console.log(`html_file_path:`, { html_file_path, fileExists });
     if (!fileExists) {
       console.log(`File does not exist...`);
     }
