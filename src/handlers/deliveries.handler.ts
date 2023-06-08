@@ -38,7 +38,7 @@ export class DeliveriesRequestHandler {
   static async search_deliveries(request: Request, response: Response): ExpressResponse {
     const options = {
       you_id: response.locals.you.id as number,
-      from_city: response.locals.from_city as string,
+      from_city: request.body.from_city as string,
       from_state: request.body.from_state as string,
       to_city: request.body.to_city as string,
       to_state: request.body.to_state as string,

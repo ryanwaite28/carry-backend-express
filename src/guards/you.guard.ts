@@ -118,6 +118,7 @@ export function YouAuthorizedSlim(
   response.locals.you = auth.you;
   return next();
 }
+
 export function YouAuthorizedSlimWeak(
   request: Request,
   response: Response,
@@ -140,26 +141,6 @@ export function UserIdsAreDifferent(
       message: `user_id and you_id cannot be the same`
     });
   }
-  return next();
-}
-
-export async function UserIdsAreDifferentWithModel(
-  request: Request,
-  response: Response,
-  next: NextFunction
-) {
-  const you_id = parseInt(request.params.you_id, 10);
-  const user_id = parseInt(request.params.user_id, 10);
-  if (user_id === you_id) {
-    return response.status(HttpStatusCode.FORBIDDEN).json({
-      message: `user_id and you_id cannot be the same`
-    });
-  }
-  const user_model = await Users.findOne({
-    where: { id: user_id },
-    attributes: user_attrs_slim
-  });
-  response.locals.user = user_model && user_model.toJSON();
   return next();
 }
 
